@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOR and Cover Letter Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1 class="navbar-title">LOR and Cover Letter Generator</h1>
+        <button class="api-key-button" onclick="openDialog()">Add API Key</button>
+    </nav>
+
+    <div id="api-key-dialog" class="dialog">
+        <div class="dialog-content">
+            <span class="close" onclick="closeDialog()">&times;</span>
+            <h2>Enter Gemini API Key</h2>
+            <input type="text" id="api-key-input" placeholder="API Key">
+            <button onclick="saveApiKey()">Save</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
