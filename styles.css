@@ -157,3 +157,16 @@ body {
     max-height: 400px; /* Set a maximum height for the output area */
     text-align: left; /* Align text to the left */
 }
+
+.button {
+    background-color: #6a5acd; /* Button color */
+    color: white; /* Text color */
+    border: none; /* No border */
+    padding: 10px 15px; /* Padding for buttons */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor */
+}
+
+.button:hover {
+    background-color: #5a4bcf; /* Hover color for buttons */
+}
