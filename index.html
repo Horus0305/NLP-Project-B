@@ -2,16 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOR and Cover Letter Generator</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Added libraries for PDF/DOCX generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/docx@8.0.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
-<body style="background-color: #121212;">
+<body>
     <nav class="navbar">
         <h1 class="navbar-title">LOR and Cover Letter Generator</h1>
         <button class="api-key-button" onclick="openDialog()">Add API Key</button>
@@ -22,6 +21,9 @@
             <span class="close" onclick="closeDialog()">&times;</span>
             <h2>Enter Gemini API Key</h2>
             <input type="text" id="api-key-input" placeholder="API Key">
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Note: API keys are stored locally in your browser only.
+            </small>
             <button onclick="saveApiKey()" class="savebtn">Save</button>
         </div>
     </div>
@@ -29,7 +31,7 @@
     <div id="api-key-message" class="api-key-message" style="display: block;">
         Please enter your Gemini API Key.
         <br>
-        <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" style="margin-top: 10px; background-color: #6a5acd; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+        <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" class="button">
             GET GEMINI API KEY
         </button>
     </div>
@@ -40,15 +42,28 @@
         <div id="tab-content">
             <div id="job-application-content" style="display: none;">
                 <h3>Job/Internship Application Letter</h3>
-                <textarea id="resume-input" placeholder="Enter your resume here..." rows="5" style="width: 100%;"></textarea>
-                <textarea id="job-description-input" placeholder="Enter the job description here..." rows="5" style="width: 100%;"></textarea>
-                <button onclick="generateApplicationLetter()" class="button" style="margin-top: 10px;">
+                <div class="template-selector">
+                    <label>Tone Style: </label>
+                    <select id="template-style">
+                        <option value="formal">Formal</option>
+                        <option value="modern">Modern</option>
+                        <option value="creative">Creative</option>
+                        <option value="academic">Academic</option>
+                    </select>
+                </div>
+                <div id="keyword-analysis" class="keyword-analysis"></div>
+                <textarea id="resume-input" placeholder="Enter your resume here..." rows="5"></textarea>
+                <textarea id="job-description-input" placeholder="Enter the job description here..." rows="5"></textarea>
+                <button onclick="generateApplicationLetter()" class="button">
                     Generate Application Letter
                 </button>
-                <div id="application-output" style="margin-top: 20px; background-color: #2c2c2c; padding: 10px; border-radius: 5px; color: white;"></div>
-                <!-- Added download buttons -->
-                <div id="download-buttons" style="margin-top: 10px; display: none;">
-                    <button onclick="downloadPDF()" class="button">Download PDF</button>
+                <div class="loading-spinner"></div>
+                <div id="application-output"></div>
+                <div id="download-buttons">
+                    <button onclick="downloadPDF()" class="button">PDF</button>
+                    <button onclick="downloadDOCX()" class="button">DOCX</button>
+                    <button onclick="enableEditing()" class="button">Edit</button>
+                    <button onclick="showHistory()" class="button">History</button>
                 </div>
             </div>
         </div>
