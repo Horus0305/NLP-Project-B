@@ -53,12 +53,20 @@ function showTab(tab) {
 
     if (tab === 'job') {
         tabContent.style.display = 'block';
-        jobContent.style.display = 'block'; // Show Job/Internship Application content
+        jobContent.style.display = 'block';
     } else if (tab === 'lor') {
         tabContent.style.display = 'block';
-        jobContent.style.display = 'none'; // Hide Job/Internship Application content
-        // Add LOR content handling here if needed
+        jobContent.style.display = 'none';
     }
+}
+
+function downloadPDF() {
+    const outputText = document.getElementById('application-output').innerText;
+    const doc = new jspdf.jsPDF();
+    doc.setFontSize(12);
+    const splitText = doc.splitTextToSize(outputText, 180);
+    doc.text(splitText, 10, 10);
+    doc.save('application-letter.pdf');
 }
 
 async function generateApplicationLetter() {
@@ -66,6 +74,9 @@ async function generateApplicationLetter() {
     const jobDescription = document.getElementById('job-description-input').value.trim();
     const apiKey = localStorage.getItem('geminiApiKey');
     const outputDiv = document.getElementById('application-output');
+
+    // Reset download buttons
+    document.getElementById('download-buttons').style.display = 'none';
 
     if (!resume || !jobDescription) {
         outputDiv.innerHTML = 'Please enter both your resume and the job description.';
@@ -95,7 +106,8 @@ async function generateApplicationLetter() {
 
         const data = await response.json();
         if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            outputDiv.innerHTML = data.candidates[0].content.parts[0].text; // Display the generated letter
+            outputDiv.innerHTML = data.candidates[0].content.parts[0].text;
+            document.getElementById('download-buttons').style.display = 'flex';
         } else {
             outputDiv.innerHTML = 'Failed to generate the application letter. Please try again.';
         }
