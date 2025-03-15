@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LOR and Cover Letter Generator</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Added libraries for PDF/DOCX generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/docx@8.0.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body style="background-color: #121212;">
     <nav class="navbar">
@@ -17,7 +22,7 @@
             <span class="close" onclick="closeDialog()">&times;</span>
             <h2>Enter Gemini API Key</h2>
             <input type="text" id="api-key-input" placeholder="API Key">
-            <button onclick="saveApiKey()">Save</button>
+            <button onclick="saveApiKey()" class="savebtn">Save</button>
         </div>
     </div>
 
@@ -33,7 +38,6 @@
         <button class="tab-button" onclick="showTab('job')">Job/Internship Application Letter</button>
         <button class="tab-button" onclick="showTab('lor')">LOR</button>
         <div id="tab-content">
-            <!-- Content for the selected tab will go here -->
             <div id="job-application-content" style="display: none;">
                 <h3>Job/Internship Application Letter</h3>
                 <textarea id="resume-input" placeholder="Enter your resume here..." rows="5" style="width: 100%;"></textarea>
@@ -42,6 +46,10 @@
                     Generate Application Letter
                 </button>
                 <div id="application-output" style="margin-top: 20px; background-color: #2c2c2c; padding: 10px; border-radius: 5px; color: white;"></div>
+                <!-- Added download buttons -->
+                <div id="download-buttons" style="margin-top: 10px; display: none;">
+                    <button onclick="downloadPDF()" class="button">Download PDF</button>
+                </div>
             </div>
         </div>
     </div>
