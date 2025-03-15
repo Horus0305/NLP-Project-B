@@ -1,3 +1,6 @@
+let historyStack = [];
+const MAX_HISTORY = 5;
+
 function openDialog() {
     document.getElementById('api-key-dialog').style.display = 'block';
     const apiKey = document.getElementById('api-key-input').value;
@@ -69,27 +72,78 @@ function downloadPDF() {
     doc.save('application-letter.pdf');
 }
 
+function downloadDOCX() {
+    const outputText = document.getElementById('application-output').innerText;
+    const doc = new docx.Document({
+        sections: [{
+            properties: {},
+            children: [
+                new docx.Paragraph({
+                    children: [new docx.TextRun(outputText)]
+                })
+            ]
+        }]
+    });
+    docx.Packer.toBlob(doc).then(blob => {
+        saveAs(blob, "application-letter.docx");
+    });
+}
+
+function enableEditing() {
+    const outputDiv = document.getElementById('application-output');
+    outputDiv.contentEditable = true;
+    outputDiv.style.border = "2px solid #6366f1";
+    outputDiv.focus();
+}
+
+function showHistory() {
+    const historyDialog = document.createElement('div');
+    historyDialog.innerHTML = `
+        <div class="dialog" style="display: block;">
+            <div class="dialog-content">
+                <h2>Recent Generations</h2>
+                ${historyStack.map((text, i) => `
+                    <div class="history-item">
+                        ${text.substring(0, 50)}...
+                        <button onclick="loadHistory(${i})" class="button">Load</button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(historyDialog);
+}
+
+function loadHistory(index) {
+    document.getElementById('application-output').innerHTML = historyStack[index];
+    document.querySelector('.dialog').remove();
+}
+
 async function generateApplicationLetter() {
+    const spinner = document.querySelector('.loading-spinner');
     const resume = document.getElementById('resume-input').value.trim();
     const jobDescription = document.getElementById('job-description-input').value.trim();
     const apiKey = localStorage.getItem('geminiApiKey');
     const outputDiv = document.getElementById('application-output');
+    const templateStyle = document.getElementById('template-style').value;
 
-    // Reset download buttons
     document.getElementById('download-buttons').style.display = 'none';
+    spinner.style.display = 'block';
 
     if (!resume || !jobDescription) {
         outputDiv.innerHTML = 'Please enter both your resume and the job description.';
+        spinner.style.display = 'none';
         return;
     }
     
     if (!apiKey) {
         outputDiv.innerHTML = 'API Key is missing. Please add your API key first.';
+        spinner.style.display = 'none';
         return;
     }
 
     const requestBody = {
-        contents: [{ parts: [{ text: `Generate a well-formatted Job/Internship Application Letter in a three-paragraph block format using the following resume and job description:\n\nResume:\n${resume}\n\nJob Description:\n${jobDescription}\n\nThe response should be a professional and structured formal cover letter with three distinct paragraphs: an introduction, a body highlighting relevant skills, and a conclusion with a call to action along with a signature. No extra comments or customization tips.` }] }]
+        contents: [{ parts: [{ text: `Generate a ${templateStyle}-style well-formatted Job/Internship Application Letter in three paragraphs using:\n\nResume:\n${resume}\n\nJob Description:\n${jobDescription}\n\nResponse should be professional with three paragraphs: introduction, skills showcase, and conclusion with call to action.` }] }]
     };
 
     try {
@@ -99,20 +153,58 @@ async function generateApplicationLetter() {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Failed to generate the application letter.');
-        }
-
+        if (!response.ok) throw new Error('Failed to generate letter');
+        
         const data = await response.json();
-        if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            outputDiv.innerHTML = data.candidates[0].content.parts[0].text;
-            document.getElementById('download-buttons').style.display = 'flex';
-        } else {
-            outputDiv.innerHTML = 'Failed to generate the application letter. Please try again.';
-        }
+        const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Failed to generate';
+        
+        outputDiv.innerHTML = outputText;
+        historyStack.push(outputText);
+        if (historyStack.length > MAX_HISTORY) historyStack.shift();
+        document.getElementById('download-buttons').style.display = 'flex';
     } catch (error) {
-        console.error('Error:', error);
-        outputDiv.innerHTML = `An error occurred: ${error.message}`;
+        outputDiv.innerHTML = `Error: ${error.message}`;
+    } finally {
+        spinner.style.display = 'none';
     }
 }
+
+// Keyword Analysis Functions
+function analyzeKeywords() {
+    const resumeText = document.getElementById('resume-input').value.toLowerCase();
+    const jdText = document.getElementById('job-description-input').value.toLowerCase();
+    const analysisDiv = document.getElementById('keyword-analysis');
+
+    const resumeKeywords = findUniqueKeywords(resumeText);
+    const jdKeywords = findUniqueKeywords(jdText);
+    const matchingKeywords = [...new Set(resumeKeywords.filter(keyword => 
+        jdKeywords.includes(keyword)
+    ))];
+
+    analysisDiv.innerHTML = `
+        <div class="analysis-box">
+            <h4>Resume Keywords (${resumeKeywords.length})</h4>
+            <p>${resumeKeywords.slice(0, 15).join(', ')}</p>
+        </div>
+        <div class="analysis-box">
+            <h4>JD Keywords (${jdKeywords.length})</h4>
+            <p>${jdKeywords.slice(0, 15).join(', ')}</p>
+        </div>
+        <div class="analysis-box">
+            <h4>Matching Keywords (${matchingKeywords.length})</h4>
+            <p>${matchingKeywords.slice(0, 15).join(', ')}</p>
+        </div>
+    `;
+}
+
+function findUniqueKeywords(text) {
+    const stopWords = ['a', 'an', 'the', 'and', 'or', 'in', 'on', 'at'];
+    return [...new Set(text
+        .replace(/[^\w\s]/gi, '')
+        .split(/\s+/)
+        .filter(word => word.length > 3 && !stopWords.includes(word))
+    )];
+}
+
+document.getElementById('resume-input').addEventListener('input', analyzeKeywords);
+document.getElementById('job-description-input').addEventListener('input', analyzeKeywords);
