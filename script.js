@@ -1,6 +1,7 @@
 let historyStack = [];
 const MAX_HISTORY = 5;
 
+// Shared Functions
 function openDialog() {
     document.getElementById('api-key-dialog').style.display = 'block';
     const apiKey = document.getElementById('api-key-input').value;
@@ -19,7 +20,6 @@ function saveApiKey() {
 
     if (apiKey) {
         localStorage.setItem('geminiApiKey', apiKey);
-        console.log('API Key saved:', apiKey);
         message.style.display = 'none';
         document.getElementById('application-tabs').style.display = 'block';
         apiKeyButton.style.display = 'none';
@@ -30,72 +30,30 @@ function saveApiKey() {
     }
 }
 
-window.onload = function () {
-    const storedApiKey = localStorage.getItem('geminiApiKey');
-    const apiKeyButton = document.querySelector('.api-key-button');
-    const message = document.getElementById('api-key-message');
-
-    if (storedApiKey) {
-        apiKeyButton.style.display = 'none';
-        message.style.display = 'none';
-        document.getElementById('application-tabs').style.display = 'block';
-        showTab('job');
-    }
-};
-
-window.onclick = function (event) {
-    const dialog = document.getElementById('api-key-dialog');
-    if (event.target === dialog) {
-        closeDialog();
-    }
-};
-
 function showTab(tab) {
     const jobContent = document.getElementById('job-application-content');
+    const lorContent = document.getElementById('lor-content');
     const tabContent = document.getElementById('tab-content');
 
     if (tab === 'job') {
         tabContent.style.display = 'block';
         jobContent.style.display = 'block';
+        lorContent.style.display = 'none';
     } else if (tab === 'lor') {
         tabContent.style.display = 'block';
         jobContent.style.display = 'none';
+        lorContent.style.display = 'block';
     }
 }
 
-function downloadPDF() {
-    const outputText = document.getElementById('application-output').innerText;
-    const doc = new jspdf.jsPDF();
-    doc.setFontSize(12);
-    const splitText = doc.splitTextToSize(outputText, 180);
-    doc.text(splitText, 10, 10);
-    doc.save('application-letter.pdf');
-}
-
-function downloadDOCX() {
-    const outputText = document.getElementById('application-output').innerText;
-    const doc = new docx.Document({
-        sections: [{
-            properties: {},
-            children: [
-                new docx.Paragraph({
-                    children: [new docx.TextRun(outputText)]
-                })
-            ]
-        }]
-    });
-    docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, "application-letter.docx");
-    });
-}
-
-function enableEditing() {
-    const outputDiv = document.getElementById('application-output');
+function enableEditing(elementId) {
+    const outputDiv = document.getElementById(elementId);
     outputDiv.contentEditable = true;
     outputDiv.style.border = "2px solid #6366f1";
     outputDiv.focus();
 }
 
+// History Management
 function showHistory() {
     const historyDialog = document.createElement('div');
     historyDialog.innerHTML = `
@@ -115,10 +73,16 @@ function showHistory() {
 }
 
 function loadHistory(index) {
-    document.getElementById('application-output').innerHTML = historyStack[index];
+    const activeTab = document.querySelector('[id$="-content"]:not([style*="none"])').id;
+    const outputDiv = activeTab.includes('job') ? 
+        document.getElementById('application-output') : 
+        document.getElementById('lor-output');
+    
+    outputDiv.innerHTML = historyStack[index];
     document.querySelector('.dialog').remove();
 }
 
+// Job Application Functions
 async function generateApplicationLetter() {
     const spinner = document.querySelector('.loading-spinner');
     const resume = document.getElementById('resume-input').value.trim();
@@ -136,14 +100,8 @@ async function generateApplicationLetter() {
         return;
     }
     
-    if (!apiKey) {
-        outputDiv.innerHTML = 'API Key is missing. Please add your API key first.';
-        spinner.style.display = 'none';
-        return;
-    }
-
     const requestBody = {
-        contents: [{ parts: [{ text: `Generate a ${templateStyle}-style well-formatted Job/Internship Application Letter in three paragraphs using:\n\nResume:\n${resume}\n\nJob Description:\n${jobDescription}\n\nResponse should be professional with three paragraphs: introduction, skills showcase, and conclusion with call to action.` }] }]
+        contents: [{ parts: [{ text: `Generate ${templateStyle} cover letter using:\nResume:${resume}\nJob Desc:${jobDescription}\nStructure: 3 paragraphs - intro, skills, conclusion with call to action` }] }]
     };
 
     try {
@@ -153,8 +111,6 @@ async function generateApplicationLetter() {
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) throw new Error('Failed to generate letter');
-        
         const data = await response.json();
         const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Failed to generate';
         
@@ -169,42 +125,110 @@ async function generateApplicationLetter() {
     }
 }
 
-// Keyword Analysis Functions
-function analyzeKeywords() {
-    const resumeText = document.getElementById('resume-input').value.toLowerCase();
-    const jdText = document.getElementById('job-description-input').value.toLowerCase();
-    const analysisDiv = document.getElementById('keyword-analysis');
+// LOR Functions
+async function generateLOR() {
+    const spinner = document.querySelector('.loading-spinner');
+    const studentName = document.getElementById('student-name').value.trim();
+    const recommenderName = document.getElementById('recommender-name').value.trim();
+    const relationship = document.getElementById('relationship').value.trim();
+    const courses = document.getElementById('courses').value.trim();
+    const achievements = document.getElementById('achievements').value.trim();
+    const purpose = document.getElementById('purpose').value.trim();
+    const apiKey = localStorage.getItem('geminiApiKey');
+    const outputDiv = document.getElementById('lor-output');
+    const lorType = document.getElementById('lor-type').value;
 
-    const resumeKeywords = findUniqueKeywords(resumeText);
-    const jdKeywords = findUniqueKeywords(jdText);
-    const matchingKeywords = [...new Set(resumeKeywords.filter(keyword => 
-        jdKeywords.includes(keyword)
-    ))];
+    document.getElementById('lor-download-buttons').style.display = 'none';
+    spinner.style.display = 'block';
 
-    analysisDiv.innerHTML = `
-        <div class="analysis-box">
-            <h4>Resume Keywords (${resumeKeywords.length})</h4>
-            <p>${resumeKeywords.slice(0, 15).join(', ')}</p>
-        </div>
-        <div class="analysis-box">
-            <h4>JD Keywords (${jdKeywords.length})</h4>
-            <p>${jdKeywords.slice(0, 15).join(', ')}</p>
-        </div>
-        <div class="analysis-box">
-            <h4>Matching Keywords (${matchingKeywords.length})</h4>
-            <p>${matchingKeywords.slice(0, 15).join(', ')}</p>
-        </div>
-    `;
+    if (!studentName || !recommenderName || !relationship) {
+        outputDiv.innerHTML = 'Please fill required fields';
+        spinner.style.display = 'none';
+        return;
+    }
+    
+    const requestBody = {
+        contents: [{
+            parts: [{
+                text: `Write ${lorType} LOR for ${studentName} from ${recommenderName} (${relationship}) for ${purpose}.
+                Courses: ${courses}
+                Achievements: ${achievements}
+                Include: Letterhead, relationship context, achievements, personal qualities, strong recommendation`
+            }]
+        }]
+    };
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Failed to generate';
+        
+        outputDiv.innerHTML = outputText;
+        historyStack.push(outputText);
+        if (historyStack.length > MAX_HISTORY) historyStack.shift();
+        document.getElementById('lor-download-buttons').style.display = 'flex';
+    } catch (error) {
+        outputDiv.innerHTML = `Error: ${error.message}`;
+    } finally {
+        spinner.style.display = 'none';
+    }
 }
 
-function findUniqueKeywords(text) {
-    const stopWords = ['a', 'an', 'the', 'and', 'or', 'in', 'on', 'at'];
-    return [...new Set(text
-        .replace(/[^\w\s]/gi, '')
-        .split(/\s+/)
-        .filter(word => word.length > 3 && !stopWords.includes(word))
-    )];
+// Download Functions
+function downloadPDF() {
+    const outputText = document.getElementById('application-output').innerText;
+    const doc = new jspdf.jsPDF();
+    doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
+    doc.save('cover-letter.pdf');
 }
 
-document.getElementById('resume-input').addEventListener('input', analyzeKeywords);
-document.getElementById('job-description-input').addEventListener('input', analyzeKeywords);
+function downloadDOCX() {
+    const outputText = document.getElementById('application-output').innerText;
+    const doc = new docx.Document({
+        sections: [{
+            children: [new docx.Paragraph(outputText)]
+        }]
+    });
+    docx.Packer.toBlob(doc).then(blob => saveAs(blob, "cover-letter.docx"));
+}
+
+function downloadLorPDF() {
+    const outputText = document.getElementById('lor-output').innerText;
+    const doc = new jspdf.jsPDF();
+    doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
+    doc.save('recommendation-letter.pdf');
+}
+
+function downloadLorDOCX() {
+    const outputText = document.getElementById('lor-output').innerText;
+    const doc = new docx.Document({
+        sections: [{
+            children: [new docx.Paragraph(outputText)]
+        }]
+    });
+    docx.Packer.toBlob(doc).then(blob => saveAs(blob, "recommendation-letter.docx"));
+}
+
+// Initialization
+window.onload = function() {
+    const storedApiKey = localStorage.getItem('geminiApiKey');
+    if (storedApiKey) {
+        document.querySelector('.api-key-button').style.display = 'none';
+        document.getElementById('api-key-message').style.display = 'none';
+        document.getElementById('application-tabs').style.display = 'block';
+        showTab('job');
+    }
+};
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('api-key-dialog')) {
+        closeDialog();
+    }
+};
