@@ -37,9 +37,11 @@
     </div>
 
     <div id="application-tabs" class="application-tabs" style="display: none;">
-        <button class="tab-button" onclick="showTab('job')">Job/Internship Application Letter</button>
-        <button class="tab-button" onclick="showTab('lor')">LOR</button>
+        <button class="tab-button" onclick="showTab('job')">Job/Internship Application</button>
+        <button class="tab-button" onclick="showTab('lor')">Letter of Recommendation</button>
+        
         <div id="tab-content">
+            <!-- Job Application Content -->
             <div id="job-application-content" style="display: none;">
                 <h3>Job/Internship Application Letter</h3>
                 <div class="template-selector">
@@ -54,15 +56,44 @@
                 <div id="keyword-analysis" class="keyword-analysis"></div>
                 <textarea id="resume-input" placeholder="Enter your resume here..." rows="5"></textarea>
                 <textarea id="job-description-input" placeholder="Enter the job description here..." rows="5"></textarea>
-                <button onclick="generateApplicationLetter()" class="button">
-                    Generate Application Letter
-                </button>
+                <button onclick="generateApplicationLetter()" class="button">Generate Application Letter</button>
                 <div class="loading-spinner"></div>
                 <div id="application-output"></div>
                 <div id="download-buttons">
-                    <button onclick="downloadPDF()" class="button">PDF</button>
-                    <button onclick="downloadDOCX()" class="button">DOCX</button>
-                    <button onclick="enableEditing()" class="button">Edit</button>
+                    <button onclick="downloadPDF()">PDF</button>
+                    <button onclick="downloadDOCX()">DOCX</button>
+                    <button onclick="enableEditing()">Edit</button>
+                    <button onclick="showHistory()">History</button>
+                </div>
+            </div>
+
+            <!-- LOR Content -->
+            <div id="lor-content" style="display: none;">
+                <h3>Letter of Recommendation</h3>
+                <div class="lor-inputs">
+                    <div class="input-row">
+                        <input type="text" id="student-name" placeholder="Student's Full Name">
+                        <input type="text" id="recommender-name" placeholder="Recommender's Name">
+                    </div>
+                    <div class="input-row">
+                        <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
+                        <select id="lor-type">
+                            <option value="academic">Academic</option>
+                            <option value="professional">Professional</option>
+                            <option value="scholarship">Scholarship</option>
+                        </select>
+                    </div>
+                    <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
+                    <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
+                    <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
+                </div>
+                <button onclick="generateLOR()" class="button">Generate LOR</button>
+                <div class="loading-spinner"></div>
+                <div id="lor-output"></div>
+                <div id="lor-download-buttons" id="download-buttons">
+                    <button onclick="downloadLorPDF()" class="button">PDF</button>
+                    <button onclick="downloadLorDOCX()" class="button">DOCX</button>
+                    <button onclick="enableEditing('lor-output')" class="button">Edit</button>
                     <button onclick="showHistory()" class="button">History</button>
                 </div>
             </div>
