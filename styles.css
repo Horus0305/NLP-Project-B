@@ -319,7 +319,7 @@ textarea {
 
 /* Remove all inline styles from HTML */
 #api-key-dialog,
-#api-key-message,
+/* #api-key-message, */
 #application-tabs,
 #job-application-content {
     display: none;
@@ -464,6 +464,7 @@ textarea {
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -580,4 +581,59 @@ textarea {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Add to end of file */
+.interview-container {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+}
+
+.interview-question {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.question-progress {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.question-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.interview-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.interview-navigation button {
+    flex: 1;
+    max-width: 200px;
 }
