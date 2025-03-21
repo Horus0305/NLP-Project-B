@@ -23,6 +23,7 @@ function saveApiKey() {
         message.style.display = 'none';
         document.getElementById('application-tabs').style.display = 'block';
         apiKeyButton.style.display = 'none';
+        closeDialog();
         showTab('job');
     } else {
         message.style.display = 'block';

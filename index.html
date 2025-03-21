@@ -15,7 +15,7 @@
         <h1 class="navbar-title">LOR and Cover Letter Generator</h1>
         <button class="api-key-button" onclick="openDialog()">Add API Key</button>
     </nav>
-
+    
     <div id="api-key-dialog" class="dialog">
         <div class="dialog-content">
             <span class="close" onclick="closeDialog()">&times;</span>
@@ -28,10 +28,10 @@
         </div>
     </div>
 
-    <div id="api-key-message" class="api-key-message" style="display: block;">
+    <div id="api-key-message" class="api-key-message" style="display: block; text-align: center; margin-top: 50px;">
         Please enter your Gemini API Key.
         <br>
-        <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" class="button">
+        <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" class="button" style="margin-top: 20px;">
             GET GEMINI API KEY
         </button>
     </div>
