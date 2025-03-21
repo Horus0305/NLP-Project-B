@@ -51,6 +51,7 @@
                         <option value="job">Job/Internship Application Letter</option>
                         <option value="cover">Cover Letter</option>
                         <option value="sop">Statement of Purpose (SOP)</option>
+                        <option value="other">Other (General Letters)</option>
                     </select>
                 </div>
                 <div class="letter-inputs">
@@ -77,10 +78,18 @@
                 <h3>Know Your Resume</h3>
                 <div class="resume-input-container">
                     <textarea id="resume-text" placeholder="Paste your resume here..." rows="10"></textarea>
-                    <button onclick="analyzeResume()" class="button">Analyze Resume</button>
+                    <button onclick="startResumeAnalysis()" class="button">Analyze Resume</button>
                 </div>
                 <div class="loading-spinner"></div>
                 <div id="resume-output"></div>
+                <div id="interview-container" class="interview-container hidden">
+                    <div id="interview-questions"></div>
+                    <div class="interview-navigation">
+                        <button onclick="previousQuestion()" class="button">Previous</button>
+                        <span class="question-progress" id="question-progress"></span>
+                        <button onclick="nextQuestion()" class="button">Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
