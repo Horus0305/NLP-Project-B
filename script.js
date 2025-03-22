@@ -687,64 +687,81 @@ function displayInterviewItems(items) {
 
 // Update download function
 function downloadInterviewPrep() {
-  const items = Array.from(document.querySelectorAll('.interview-question')).map(q => ({
-    type: q.querySelector('.question-type').textContent,
-    question: q.querySelector('.question-text').textContent,
-    answer: q.querySelector('.full-answer').textContent,
-    keyPoints: Array.from(q.querySelectorAll('.key-points-list li')).map(li => li.textContent)
-  }));
-
-  const doc = new jspdf.jsPDF();
-  doc.setFontSize(16);
-  doc.text("Interview Preparation Guide", 105, 20, { align: "center" });
-  
-  let yPos = 30;
-  items.forEach((item, index) => {
-    // Question Header
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`[${item.type}] Question ${index + 1}:`, 15, yPos);
-    yPos += 8;
-    
-    // Question Text
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'normal');
-    const questionLines = doc.splitTextToSize(item.question, 180);
-    doc.text(questionLines, 20, yPos);
-    yPos += (questionLines.length * 7) + 10;
-
-    // Answer
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
-    doc.text("Answer:", 15, yPos);
-    yPos += 7;
-    
-    doc.setFont(undefined, 'normal');
-    const answerLines = doc.splitTextToSize(item.answer, 180);
-    doc.text(answerLines, 20, yPos);
-    yPos += (answerLines.length * 7) + 10;
-
-    // Key Points
-    doc.setFont(undefined, 'bold');
-    doc.text("Key Points:", 15, yPos);
-    yPos += 7;
-    
-    doc.setFont(undefined, 'normal');
-    item.keyPoints.forEach((kp, i) => {
-      const bulletText = `• ${kp}`;
-      const lines = doc.splitTextToSize(bulletText, 180);
-      lines.forEach(line => {
-        if (yPos > 280) {
-          doc.addPage();
-          yPos = 20;
-        }
-        doc.text(line, 20, yPos);
-        yPos += 7;
+  try {
+      const items = Array.from(document.querySelectorAll('.interview-question')).map(q => {
+          return {
+              type: q.querySelector('.question-type')?.textContent || '',
+              question: q.querySelector('.question-text')?.textContent || '',
+              answer: q.querySelector('.answer-text')?.textContent || '',
+              keyPoints: Array.from(q.querySelectorAll('.key-points-list li')).map(li => li.textContent)
+          };
       });
-    });
-    
-    yPos += 10;
-  });
 
-  doc.save("interview-prep-guide.pdf");
+      const doc = new jspdf.jsPDF();
+      doc.setFontSize(16);
+      doc.text("Interview Preparation Guide", 105, 20, { align: "center" });
+      
+      let yPos = 30;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 15;
+
+      items.forEach((item, index) => {
+          // Check for page break
+          if (yPos > pageHeight - 20) {
+              doc.addPage();
+              yPos = margin;
+          }
+
+          // Question Type and Number
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text(`[${item.type}] Question ${index + 1}:`, margin, yPos);
+          yPos += 8;
+
+          // Question Text
+          doc.setFontSize(11);
+          doc.setFont(undefined, 'normal');
+          const questionLines = doc.splitTextToSize(item.question, 180);
+          doc.text(questionLines, margin + 5, yPos);
+          yPos += (questionLines.length * 7) + 10;
+
+          // Answer Section
+          doc.setFont(undefined, 'bold');
+          doc.text("Answer:", margin, yPos);
+          yPos += 7;
+          
+          doc.setFont(undefined, 'normal');
+          const answerLines = doc.splitTextToSize(item.answer, 180);
+          doc.text(answerLines, margin + 5, yPos);
+          yPos += (answerLines.length * 7) + 10;
+
+          // Key Points Section
+          doc.setFont(undefined, 'bold');
+          doc.text("Key Points:", margin, yPos);
+          yPos += 7;
+          
+          doc.setFont(undefined, 'normal');
+          item.keyPoints.forEach((kp, i) => {
+              const bulletText = `• ${kp}`;
+              const lines = doc.splitTextToSize(bulletText, 180);
+              
+              lines.forEach(line => {
+                  if (yPos > pageHeight - 20) {
+                      doc.addPage();
+                      yPos = margin;
+                  }
+                  doc.text(line, margin + 5, yPos);
+                  yPos += 7;
+              });
+              yPos += 2; // Space between bullets
+          });
+
+          yPos += 10; // Space between questions
+      });
+
+      doc.save("interview-prep-guide.pdf");
+  } catch (error) {
+      console.error('Download failed:', error);
+      alert('Error generating PDF. Please check the console for details.');
+  }
 }
