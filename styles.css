@@ -733,3 +733,75 @@ textarea {
         font-size: 1.2rem;
     }
 }
+
+/* Add to styles.css */
+.question-number {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-right: 1rem;
+}
+
+.answer-label {
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin: 1rem 0 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  
+  .answer-text {
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+.question-type {
+    background: #4f46e5;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 1.0rem;
+    margin-right: 1rem;
+  }
+  
+  .full-answer {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+  
+  .key-points-label {
+    font-weight: 600;
+    color: #4f46e5;
+    margin-bottom: 0.5rem;
+  }
+  
+  .key-points-list li {
+    list-style-type: none;
+    margin: 0.5rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  
+  .key-points-list li::before {
+    content: "•";
+    color: #6366f1;
+    position: absolute;
+    left: 0;
+    }
+
+.answer-text {
+        line-height: 1.5;
+        padding-left: 3rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+      
+.key-points-list li {
+        margin: 0.5rem 0;
+        padding-left: 1rem;
+        position: relative;
+}
