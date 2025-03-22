@@ -670,69 +670,193 @@ function updateNavigationButtons() {
 }
 
 async function generateFinalAnalysis() {
-    const spinner = document.querySelector(".loading-spinner");
-    const apiKey = localStorage.getItem("geminiApiKey");
-    const resumeText = document.getElementById("resume-text").value.trim();
-    spinner.style.display = "block";
+  const spinner = document.querySelector(".loading-spinner");
+  const apiKey = localStorage.getItem("geminiApiKey");
+  const resumeText = document.getElementById("resume-text").value.trim();
+  spinner.style.display = "block";
 
-    try {
-        const qaPairs = currentQuestions.map((q, i) => 
-            `Question: ${q}\nAnswer: ${userResponses[i] || 'No response'}\n`
-        ).join('\n');
+  try {
+      const qaPairs = currentQuestions.map((q, i) => 
+          `Question: ${q}\nAnswer: ${userResponses[i] || 'No response'}\n`
+      ).join('\n');
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Generate a comprehensive career analysis report based on:
-                            Resume: ${resumeText}
-                            
-                            Interview Responses:
-                            ${qaPairs}
-                            
-                            Include these sections:
-                            1. Career Strengths and Differentiators
-                            2. Skill Validation Matrix
-                            3. Project Impact Assessment
-                            4. Leadership Potential Analysis
-                            5. Technical Depth Evaluation
-                            6. Career Development Recommendations
-                            7. Market Positioning Advice
-                            
-                            Format with clear headings and bullet points`
-                        }]
-                    }]
-                })
-            }
-        );
+      const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  contents: [{
+                      parts: [{
+                          text: `Generate a moderately detailed career analysis report based on:
+                          Resume: ${resumeText}
+                          
+                          Interview Responses:
+                          ${qaPairs}
+                          
+                          Include these sections:
+                          1. Executive Summary (brief overview of candidate's profile)
+                          2. Key Strengths (3-4 bullet points with little long explanations)
+                          3. Skills Analysis (categorize skills and provide little less assessment of each category)
+                          4. Project Highlights (3-4 most significant projects with impact metrics)
+                          5. Experience Insights (little long analysis of work experience and achievements)
+                          6. Career Development Recommendations (4-5 actionable suggestions)
+                          
+                          Format with markdown headings, bullet points, and paragraphs.
+                          The report should be moderately detailed (700-900 words) - not too brief but not exhaustive.
+                          Focus on providing meaningful insights rather than just summarizing the resume.
+                          
+                          Format the final report with proper markdown (##, *, etc.) for readability.`
+                      }]
+                  }]
+              })
+          }
+      );
 
-        const data = await response.json();
-        const analysis = data.candidates[0].content.parts[0].text;
-        
-        document.getElementById("resume-output").innerHTML = `
-            <div class="analysis-content">
-                <h2>Career Analysis Report</h2>
-                <pre>${analysis}</pre>
-                <button onclick="downloadReport()" class="button">Download Full Report</button>
-            </div>
-        `;
-        
-        document.getElementById("interview-container").classList.add("hidden");
+      const data = await response.json();
+      let analysis = data.candidates[0].content.parts[0].text;
+      
+      // Convert markdown to HTML
+      analysis = analysis
+          .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+          .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/^- (.*$)/gm, '<li>$1</li>')
+          .replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+      
+      // Wrap lists in <ul> tags
+      analysis = analysis.replace(/<li>(.*?)<\/li>/g, function(match) {
+          return '<ul>' + match + '</ul>';
+      }).replace(/<\/ul><ul>/g, '');
+      
+      // Replace double line breaks with paragraph tags
+      analysis = analysis.replace(/\n\n/g, '</p><p>');
+      
+      document.getElementById("resume-output").innerHTML = `
+          <div class="analysis-content">
+              <h2>Career Analysis Report</h2>
+              <div class="report-body"><p>${analysis}</p></div>
+              <button onclick="downloadReport()" class="button">Download Report</button>
+          </div>
+      `;
+      
+      document.getElementById("interview-container").classList.add("hidden");
 
-    } catch (error) {
-        console.error("Error generating analysis:", error);
-        alert("Error generating final analysis. Please try again.");
-    } finally {
-        spinner.style.display = "none";
-    }
+  } catch (error) {
+      console.error("Error generating analysis:", error);
+      alert("Error generating final analysis. Please try again.");
+  } finally {
+      spinner.style.display = "none";
+  }
 }
 
+// Updated download function to handle the new HTML formatting
 function downloadReport() {
-    const analysisText = document.querySelector(".analysis-content pre").innerText;
-    const blob = new Blob([analysisText], { type: "text/plain;charset=utf-8" });
-    saveAs(blob, "career-analysis-report.txt");
+  
+  const reportElement = document.querySelector(".report-body");
+  const reportTitle = "Career Analysis Report";
+
+  const doc = new jspdf.jsPDF();
+  
+  doc.setFont("helvetica");
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  
+  doc.text(reportTitle, 105, 20, { align: "center" });
+
+  const content = reportElement.innerHTML;
+
+  function extractSections(content) {
+    const sections = [];
+    
+    const headingMatches = content.match(/<h[2-3]>(.*?)<\/h[2-3]>/g) || [];
+    
+    let lastIndex = 0;
+    headingMatches.forEach((match, index) => {
+      const headingText = match.replace(/<\/?h[2-3]>/g, '');
+      const startIndex = content.indexOf(match, lastIndex);
+      let endIndex;
+      
+      if (index < headingMatches.length - 1) {
+        endIndex = content.indexOf(headingMatches[index + 1], startIndex);
+      } else {
+        endIndex = content.length;
+      }
+      
+      const sectionContent = content.substring(startIndex + match.length, endIndex);
+      sections.push({
+        heading: headingText,
+        content: sectionContent.replace(/<\/?[^>]+(>|$)/g, ' ')
+                               .replace(/&nbsp;/g, ' ')
+                               .replace(/\s+/g, ' ')
+                               .trim()
+      });
+      
+      lastIndex = endIndex;
+    });
+    
+    return sections;
+  }
+  
+  const sections = extractSections(content);
+  
+  // Start Y position after title
+  let yPosition = 30;
+  const leftMargin = 15;
+  const pageWidth = 180;
+  
+  // Add each section to PDF
+  sections.forEach((section, index) => {
+    // Add section heading
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    
+    // Check if we need a new page
+    if (yPosition > 270) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.text(section.heading, leftMargin, yPosition);
+    yPosition += 8;
+    
+    // Add section content
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    // Handle bullet points
+    const contentWithBullets = section.content.replace(/•/g, '\n• ');
+    const paragraphs = contentWithBullets.split(/\n+/);
+    
+    paragraphs.forEach(paragraph => {
+      const textLines = doc.splitTextToSize(paragraph.trim(), pageWidth);
+      
+      // Check if we need a new page for this paragraph
+      if (yPosition + (textLines.length * 6) > 280) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      doc.text(textLines, leftMargin, yPosition);
+      yPosition += (textLines.length * 6) + 4;
+    });
+    
+    // Add space between sections
+    yPosition += 4;
+  });
+  
+  // If there are no sections (empty content or parsing failed), add a fallback
+  if (sections.length === 0) {
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+    const textLines = doc.splitTextToSize(textContent, pageWidth);
+    doc.text(textLines, leftMargin, yPosition);
+  }
+  
+  // Save the PDF
+  doc.save("career-analysis-report.pdf");
 }
