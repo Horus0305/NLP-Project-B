@@ -568,295 +568,183 @@ window.onclick = function (event) {
   }
 };
 
+// In the startResumeAnalysis function, replace the prompt with:
 async function startResumeAnalysis() {
-    const resumeText = document.getElementById("resume-text").value.trim();
-    if (!resumeText) {
-        alert("Please paste your resume first");
-        return;
-    }
-
-    const apiKey = localStorage.getItem("geminiApiKey");
-    const spinner = document.querySelector(".loading-spinner");
-    spinner.style.display = "block";
-
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Analyze this resume and generate 5-8 specific follow-up questions to better understand their experience:
-                            ${resumeText}
-                            
-                            Focus on:
-                            1. Projects mentioned (methodologies, challenges, outcomes)
-                            2. Skills listed (depth of knowledge, practical applications)
-                            3. Career gaps or job changes
-                            4. Leadership experiences
-                            5. Technical implementations
-                            6. Metrics and measurable outcomes
-                            
-                            Format as JSON array: {questions: ["question1", "question2", ...]}`
-                        }]
-                    }]
-                })
-            }
-        );
-
-        const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
-        const jsonResponse = JSON.parse(textResponse.replace(/```json/g, '').replace(/```/g, ''));
-        currentQuestions = jsonResponse.questions;
-        userResponses = {};
-        
-        showQuestion(0);
-        document.getElementById("interview-container").classList.remove("hidden");
-        document.getElementById("resume-output").innerHTML = "";
-
-    } catch (error) {
-        console.error("Error generating questions:", error);
-        alert("Error generating questions. Please try again.");
-    } finally {
-        spinner.style.display = "none";
-    }
-}
-
-function showQuestion(index) {
-    const container = document.getElementById("interview-questions");
-    currentQuestionIndex = index;
-    
-    container.innerHTML = `
-        <div class="interview-question">
-            <div class="question-header">
-                <h4>Question ${index + 1} of ${currentQuestions.length}</h4>
-                <span class="question-progress">${index + 1}/${currentQuestions.length}</span>
-            </div>
-            <div class="question-text">${currentQuestions[index]}</div>
-            <textarea 
-                class="question-input" 
-                id="answer-${index}" 
-                placeholder="Type your response here..."
-                oninput="userResponses[${index}] = this.value"
-            >${userResponses[index] || ''}</textarea>
-        </div>
-    `;
-
-    document.getElementById("question-progress").textContent = `Question ${index + 1} of ${currentQuestions.length}`;
-    updateNavigationButtons();
-}
-
-function nextQuestion() {
-    if (currentQuestionIndex < currentQuestions.length - 1) {
-        showQuestion(currentQuestionIndex + 1);
-    } else {
-        generateFinalAnalysis();
-    }
-}
-
-function previousQuestion() {
-    if (currentQuestionIndex > 0) {
-        showQuestion(currentQuestionIndex - 1);
-    }
-}
-
-function updateNavigationButtons() {
-    const nextButton = document.querySelector(".interview-navigation button:last-child");
-    nextButton.textContent = currentQuestionIndex === currentQuestions.length - 1 
-        ? "Generate Report" 
-        : "Next Question";
-}
-
-async function generateFinalAnalysis() {
-  const spinner = document.querySelector(".loading-spinner");
-  const apiKey = localStorage.getItem("geminiApiKey");
   const resumeText = document.getElementById("resume-text").value.trim();
+  if (!resumeText) {
+    alert("Please paste your resume first");
+    return;
+  }
+
+  const apiKey = localStorage.getItem("geminiApiKey");
+  const spinner = document.querySelector(".loading-spinner");
   spinner.style.display = "block";
 
   try {
-      const qaPairs = currentQuestions.map((q, i) => 
-          `Question: ${q}\nAnswer: ${userResponses[i] || 'No response'}\n`
-      ).join('\n');
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Analyze this resume and generate 10-15 interview preparation items:
+              ${resumeText}
+              
+              Requirements:
+              1. Include various question types:
+                 - Technical questions
+                 - Behavioral questions
+                 - Scenario-based questions
+                 - Resume clarification
+                 - Industry-specific questions
+              2. For each item provide:
+                 - Question type
+                 - Question text
+                 - Detailed answer
+                 - 3-5 key bullet points
+              3. Format response as valid JSON:
+              {
+                "items": [
+                  {
+                    "type": "question type",
+                    "question": "text",
+                    "answer": "text",
+                    "keyPoints": ["point1", "point2"]
+                  }
+                ]
+              }
+              4. Focus on key achievements and technologies mentioned
+              5. Include numbers and metrics where possible`
+            }]
+          }]
+        })
+      }
+    );
 
-      const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                  contents: [{
-                      parts: [{
-                          text: `Generate a moderately detailed career analysis report based on:
-                          Resume: ${resumeText}
-                          
-                          Interview Responses:
-                          ${qaPairs}
-                          
-                          Include these sections:
-                          1. Executive Summary (brief overview of candidate's profile)
-                          2. Key Strengths (3-4 bullet points with little long explanations)
-                          3. Skills Analysis (categorize skills and provide little less assessment of each category)
-                          4. Project Highlights (3-4 most significant projects with impact metrics)
-                          5. Experience Insights (little long analysis of work experience and achievements)
-                          6. Career Development Recommendations (4-5 actionable suggestions)
-                          
-                          Format with markdown headings, bullet points, and paragraphs.
-                          The report should be moderately detailed (700-900 words) - not too brief but not exhaustive.
-                          Focus on providing meaningful insights rather than just summarizing the resume.
-                          
-                          Format the final report with proper markdown (##, *, etc.) for readability.`
-                      }]
-                  }]
-              })
-          }
-      );
-
-      const data = await response.json();
-      let analysis = data.candidates[0].content.parts[0].text;
-      
-      // Convert markdown to HTML
-      analysis = analysis
-          .replace(/^## (.*$)/gm, '<h3>$1</h3>')
-          .replace(/^# (.*$)/gm, '<h2>$1</h2>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-          .replace(/^- (.*$)/gm, '<li>$1</li>')
-          .replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
-      
-      // Wrap lists in <ul> tags
-      analysis = analysis.replace(/<li>(.*?)<\/li>/g, function(match) {
-          return '<ul>' + match + '</ul>';
-      }).replace(/<\/ul><ul>/g, '');
-      
-      // Replace double line breaks with paragraph tags
-      analysis = analysis.replace(/\n\n/g, '</p><p>');
-      
-      document.getElementById("resume-output").innerHTML = `
-          <div class="analysis-content">
-              <h2>Career Analysis Report</h2>
-              <div class="report-body"><p>${analysis}</p></div>
-              <button onclick="downloadReport()" class="button">Download Report</button>
-          </div>
-      `;
-      
-      document.getElementById("interview-container").classList.add("hidden");
+    const data = await response.json();
+    const textResponse = data.candidates[0].content.parts[0].text;
+    const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
+    const interviewData = JSON.parse(cleanJSON);
+    
+    displayInterviewItems(interviewData.items);
+    document.getElementById("interview-container").classList.remove("hidden");
 
   } catch (error) {
-      console.error("Error generating analysis:", error);
-      alert("Error generating final analysis. Please try again.");
+    console.error("Error generating Q&A:", error);
+    alert("Error generating questions. Please try again.");
   } finally {
-      spinner.style.display = "none";
+    spinner.style.display = "none";
   }
 }
+  text: `Analyze this resume and generate interview preparation items:
+  ${resumeText}
 
-// Updated download function to handle the new HTML formatting
-function downloadReport() {
-  
-  const reportElement = document.querySelector(".report-body");
-  const reportTitle = "Career Analysis Report";
+  Requirements:
+  1. For each item provide:
+    - Question type (Technical/Behavioral/Scenario)
+    - Specific question
+    - Concise answer (2-3 sentences)
+    - 3-4 key bullet points
+  2. Format response as valid JSON:
+  {
+    "items": [
+      {
+        "type": "question type",
+        "question": "text",
+        "answer": "2-3 sentence answer",
+        "keyPoints": ["point1", "point2"]
+      }
+    ]
+  }
+  3. Focus on technical implementations and measurable outcomes
+  4. Include specific tools/technologies mentioned in resume`;
+
+// Updated display function
+function displayInterviewItems(items) {
+  const container = document.getElementById("interview-questions");
+  container.innerHTML = items.map((item, index) => `
+    <div class="interview-question">
+      <div class="question-header">
+        <span class="question-type">${item.type}</span>
+        <span class="question-number">Question ${index + 1}</span>
+      </div>
+      <div class="question-text">${item.question}</div>
+      <div class="answer-section">
+        <div class="answer-label">Answer:</div>
+        <div class="answer-text">${item.answer}</div>
+        <div class="key-points">
+          <div class="key-points-label">Key Points:</div>
+          <ul class="key-points-list">
+            ${item.keyPoints.map(kp => `<li>${kp}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Update download function
+function downloadInterviewPrep() {
+  const items = Array.from(document.querySelectorAll('.interview-question')).map(q => ({
+    type: q.querySelector('.question-type').textContent,
+    question: q.querySelector('.question-text').textContent,
+    answer: q.querySelector('.full-answer').textContent,
+    keyPoints: Array.from(q.querySelectorAll('.key-points-list li')).map(li => li.textContent)
+  }));
 
   const doc = new jspdf.jsPDF();
-  
-  doc.setFont("helvetica");
   doc.setFontSize(16);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Interview Preparation Guide", 105, 20, { align: "center" });
   
-  doc.text(reportTitle, 105, 20, { align: "center" });
-
-  const content = reportElement.innerHTML;
-
-  function extractSections(content) {
-    const sections = [];
+  let yPos = 30;
+  items.forEach((item, index) => {
+    // Question Header
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`[${item.type}] Question ${index + 1}:`, 15, yPos);
+    yPos += 8;
     
-    const headingMatches = content.match(/<h[2-3]>(.*?)<\/h[2-3]>/g) || [];
+    // Question Text
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'normal');
+    const questionLines = doc.splitTextToSize(item.question, 180);
+    doc.text(questionLines, 20, yPos);
+    yPos += (questionLines.length * 7) + 10;
+
+    // Answer
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text("Answer:", 15, yPos);
+    yPos += 7;
     
-    let lastIndex = 0;
-    headingMatches.forEach((match, index) => {
-      const headingText = match.replace(/<\/?h[2-3]>/g, '');
-      const startIndex = content.indexOf(match, lastIndex);
-      let endIndex;
-      
-      if (index < headingMatches.length - 1) {
-        endIndex = content.indexOf(headingMatches[index + 1], startIndex);
-      } else {
-        endIndex = content.length;
-      }
-      
-      const sectionContent = content.substring(startIndex + match.length, endIndex);
-      sections.push({
-        heading: headingText,
-        content: sectionContent.replace(/<\/?[^>]+(>|$)/g, ' ')
-                               .replace(/&nbsp;/g, ' ')
-                               .replace(/\s+/g, ' ')
-                               .trim()
+    doc.setFont(undefined, 'normal');
+    const answerLines = doc.splitTextToSize(item.answer, 180);
+    doc.text(answerLines, 20, yPos);
+    yPos += (answerLines.length * 7) + 10;
+
+    // Key Points
+    doc.setFont(undefined, 'bold');
+    doc.text("Key Points:", 15, yPos);
+    yPos += 7;
+    
+    doc.setFont(undefined, 'normal');
+    item.keyPoints.forEach((kp, i) => {
+      const bulletText = `• ${kp}`;
+      const lines = doc.splitTextToSize(bulletText, 180);
+      lines.forEach(line => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(line, 20, yPos);
+        yPos += 7;
       });
-      
-      lastIndex = endIndex;
     });
     
-    return sections;
-  }
-  
-  const sections = extractSections(content);
-  
-  // Start Y position after title
-  let yPosition = 30;
-  const leftMargin = 15;
-  const pageWidth = 180;
-  
-  // Add each section to PDF
-  sections.forEach((section, index) => {
-    // Add section heading
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    
-    // Check if we need a new page
-    if (yPosition > 270) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.text(section.heading, leftMargin, yPosition);
-    yPosition += 8;
-    
-    // Add section content
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    
-    // Handle bullet points
-    const contentWithBullets = section.content.replace(/•/g, '\n• ');
-    const paragraphs = contentWithBullets.split(/\n+/);
-    
-    paragraphs.forEach(paragraph => {
-      const textLines = doc.splitTextToSize(paragraph.trim(), pageWidth);
-      
-      // Check if we need a new page for this paragraph
-      if (yPosition + (textLines.length * 6) > 280) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      doc.text(textLines, leftMargin, yPosition);
-      yPosition += (textLines.length * 6) + 4;
-    });
-    
-    // Add space between sections
-    yPosition += 4;
+    yPos += 10;
   });
-  
-  // If there are no sections (empty content or parsing failed), add a fallback
-  if (sections.length === 0) {
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = content;
-    const textContent = tempDiv.textContent || tempDiv.innerText || "";
-    const textLines = doc.splitTextToSize(textContent, pageWidth);
-    doc.text(textLines, leftMargin, yPosition);
-  }
-  
-  // Save the PDF
-  doc.save("career-analysis-report.pdf");
+
+  doc.save("interview-prep-guide.pdf");
 }
