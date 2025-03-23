@@ -570,96 +570,68 @@ window.onclick = function (event) {
 
 // In the startResumeAnalysis function, replace the prompt with:
 async function startResumeAnalysis() {
-  const resumeText = document.getElementById("resume-text").value.trim();
-  if (!resumeText) {
-    alert("Please paste your resume first");
-    return;
-  }
+    const resumeText = document.getElementById("resume-text").value.trim();
+    if (!resumeText) {
+        alert("Please paste your resume first");
+        return;
+    }
 
-  const apiKey = localStorage.getItem("geminiApiKey");
-  const spinner = document.querySelector(".loading-spinner");
-  spinner.style.display = "block";
+    const apiKey = localStorage.getItem("geminiApiKey");
+    const spinner = document.querySelector(".loading-spinner");
+    spinner.style.display = "block";
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Analyze this resume and generate 10-15 interview preparation items:
-              ${resumeText}
-              
-              Requirements:
-              1. Include various question types:
-                 - Technical questions
-                 - Behavioral questions
-                 - Scenario-based questions
-                 - Resume clarification
-                 - Industry-specific questions
-              2. For each item provide:
-                 - Question type
-                 - Question text
-                 - Detailed answer
-                 - 3-5 key bullet points
-              3. Format response as valid JSON:
-              {
-                "items": [
-                  {
-                    "type": "question type",
-                    "question": "text",
-                    "answer": "text",
-                    "keyPoints": ["point1", "point2"]
-                  }
-                ]
-              }
-              4. Focus on key achievements and technologies mentioned
-              5. Include numbers and metrics where possible`
-            }]
-          }]
-        })
-      }
-    );
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Analyze this resume and generate interview preparation items:
+                                ${resumeText}
 
-    const data = await response.json();
-    const textResponse = data.candidates[0].content.parts[0].text;
-    const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
-    const interviewData = JSON.parse(cleanJSON);
-    
-    displayInterviewItems(interviewData.items);
-    document.getElementById("interview-container").classList.remove("hidden");
+                                Requirements:
+                                1. For each item provide:
+                                    - Question type (Technical/Behavioral/Scenario)
+                                    - Specific question
+                                    - Concise answer (2-3 sentences)
+                                    - 3-4 key bullet points
+                                2. Format response as valid JSON:
+                                {
+                                    "items": [
+                                        {
+                                            "type": "question type",
+                                            "question": "text",
+                                            "answer": "2-3 sentence answer",
+                                            "keyPoints": ["point1", "point2"]
+                                        }
+                                    ]
+                                }
+                                3. Focus on technical implementations and measurable outcomes
+                                4. Include specific tools/technologies mentioned in resume`
+                        }]
+                    }]
+                })
+            }
+        );
 
-  } catch (error) {
-    console.error("Error generating Q&A:", error);
-    alert("Error generating questions. Please try again.");
-  } finally {
-    spinner.style.display = "none";
-  }
+        const data = await response.json();
+        const textResponse = data.candidates[0].content.parts[0].text;
+        const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
+        const interviewData = JSON.parse(cleanJSON);
+        
+        displayInterviewItems(interviewData.items);
+        document.getElementById("interview-container").classList.remove("hidden");
+
+    } catch (error) {
+        console.error("Error generating Q&A:", error);
+        alert("Error generating questions. Please try again.");
+    } finally {
+        spinner.style.display = "none";
+    }
 }
-  text: `Analyze this resume and generate interview preparation items:
-  ${resumeText}
-
-  Requirements:
-  1. For each item provide:
-    - Question type (Technical/Behavioral/Scenario)
-    - Specific question
-    - Concise answer (2-3 sentences)
-    - 3-4 key bullet points
-  2. Format response as valid JSON:
-  {
-    "items": [
-      {
-        "type": "question type",
-        "question": "text",
-        "answer": "2-3 sentence answer",
-        "keyPoints": ["point1", "point2"]
-      }
-    ]
-  }
-  3. Focus on technical implementations and measurable outcomes
-  4. Include specific tools/technologies mentioned in resume`;
 
 // Updated display function
 function displayInterviewItems(items) {
@@ -672,7 +644,7 @@ function displayInterviewItems(items) {
       </div>
       <div class="question-text">${item.question}</div>
       <div class="answer-section">
-        <div class="answer-label">Answer:</div>
+        <div class="answer-label">Sample Answer:</div>
         <div class="answer-text">${item.answer}</div>
         <div class="key-points">
           <div class="key-points-label">Key Points:</div>
