@@ -233,6 +233,14 @@ textarea {
     justify-content: center;
 }
 
+.email-download-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 /* Loading Spinner */
 .loading-spinner {
     display: none;
@@ -295,7 +303,33 @@ textarea {
     border: 2px solid var(--border-color);
 }
 
+#email-download-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: space-between;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
 #download-buttons button {
+    flex: 1;
+    background: none;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+#email-download-buttons button {
     flex: 1;
     background: none;
     color: var(--primary-color);
@@ -316,6 +350,11 @@ textarea {
     transform: translateY(-1px);
 }
 
+#email-download-buttons button:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+}
 
 /* Remove all inline styles from HTML */
 #api-key-dialog,
@@ -804,4 +843,114 @@ textarea {
         margin: 0.5rem 0;
         padding-left: 1rem;
         position: relative;
+}
+
+/* Add to styles.css */
+.email-response {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.email-header {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.email-content {
+    white-space: pre-wrap;
+    font-family: 'Inter', Arial, sans-serif;
+    line-height: 1.6;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+.email-content pre {
+    margin: 0;
+    font-family: inherit;
+}
+
+.email-options {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.email-options .select-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.email-options label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.email-options select {
+    background: var(--card-bg);
+    padding: 0.75rem;
+    border-radius: 8px;
+}
+
+.output-container {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .email-response {
+        padding: 1rem;
+    }
+    
+    .email-header {
+        font-size: 1.1rem;
+    }
+    
+    .email-content {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Add animation for email response appearance */
+.email-response {
+    animation: fadeIn 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(10px);
+    animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style for email input textarea */
+#original-email-input {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
 }

@@ -39,6 +39,8 @@
     <div id="application-tabs" class="application-tabs" style="display: none;">
         <button class="tab-button" onclick="showTab('letter')">Letter Generator</button>
         <button class="tab-button" onclick="showTab('resume')">Know Your Resume</button>
+        <button class="tab-button" onclick="showTab('email')">Email Response</button>
+
         
         <div id="tab-content">
             <!-- Job Application Content -->
@@ -87,6 +89,48 @@
                     <div class="interview-navigation">
                         <button onclick="downloadInterviewPrep()" class="button">Download QA</button>
                     </div>
+                </div>
+            </div>
+
+            <div id="email-content" style="display: none;">
+                <h3>Email Response Generator</h3>
+                <div class="email-input-container">
+                    <textarea id="original-email-input" placeholder="Paste the original email here..." rows="6"></textarea>
+                    
+                    <div class="email-options">
+                        <div class="input-row">
+                            <div class="select-container">
+                                <label>Response Type:</label>
+                                <select id="response-type">
+                                    <option value="Informative">Informative</option>
+                                    <option value="Acknowledgment">Acknowledgment</option>
+                                    <option value="Scheduling">Scheduling</option>
+                                    <option value="Follow-up">Follow-up</option>
+                                    <option value="Courtesy">Courtesy</option>
+                                </select>
+                            </div>
+                            
+                            <div class="select-container">
+                                <label>Tone:</label>
+                                <select id="response-tone">
+                                    <option value="Professional">Professional</option>
+                                    <option value="Friendly">Friendly</option>
+                                    <option value="Neutral">Neutral</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="generateEmailResponse()" class="button">Generate Response</button>
+                </div>
+                
+                <div class="loading-spinner"></div>
+                
+                <div id="email-response-output" class="output-container"></div>
+                
+                <div id="email-download-buttons" class="download-buttons" style="display: none;">
+                    <button onclick="enableEditing('email-response-output')">Edit</button>
                 </div>
             </div>
         </div>

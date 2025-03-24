@@ -37,6 +37,7 @@ function saveApiKey() {
 function showTab(tab) {
   const jobContent = document.getElementById("job-application-content");
   const resumeContent = document.getElementById("resume-content");
+  const emailContent = document.getElementById("email-content");
   const tabContent = document.getElementById("tab-content");
   const tabs = document.querySelectorAll(".tab-button");
 
@@ -49,14 +50,21 @@ function showTab(tab) {
     activeTab.classList.add("active");
   }
 
+  // Hide all content sections
+  jobContent.style.display = "none";
+  resumeContent.style.display = "none";
+  if (emailContent) emailContent.style.display = "none";
+
+  // Show selected tab content
   if (tab === "letter") {
     tabContent.style.display = "block";
     jobContent.style.display = "block";
-    resumeContent.style.display = "none";
   } else if (tab === "resume") {
     tabContent.style.display = "block";
-    jobContent.style.display = "none";
     resumeContent.style.display = "block";
+  } else if (tab === "email") {
+    tabContent.style.display = "block";
+    emailContent.style.display = "block";
   }
 }
 
@@ -736,4 +744,123 @@ function downloadInterviewPrep() {
       console.error('Download failed:', error);
       alert('Error generating PDF. Please check the console for details.');
   }
+}
+
+// Add this to the existing script.js file
+
+// Email Response Generator Function
+async function generateEmailResponse() {
+  const spinner = document.querySelector(".loading-spinner");
+  const apiKey = localStorage.getItem("geminiApiKey");
+  const outputDiv = document.getElementById("email-response-output");
+  const originalEmailInput = document.getElementById("original-email-input");
+  const responseTypeSelect = document.getElementById("response-type");
+  const toneSelect = document.getElementById("response-tone");
+
+  // Clear previous output and hide download buttons
+  outputDiv.innerHTML = '';
+  document.getElementById("email-download-buttons").style.display = "none";
+  spinner.style.display = "block";
+
+  // Validate input
+  const originalEmail = originalEmailInput.value.trim();
+  if (!originalEmail) {
+      outputDiv.innerHTML = "Please paste the original email.";
+      spinner.style.display = "none";
+      return;
+  }
+
+  // Prepare request body
+  const requestBody = {
+      contents: [
+          {
+              parts: [
+                  {
+                      text: `Generate an email response with the following requirements:
+                          Original Email: ${originalEmail}
+                          Response Type: ${responseTypeSelect.value}
+                          Tone: ${toneSelect.value}
+
+                          Guidelines:
+                          1. Craft a professional and appropriate response
+                          2. Directly address the key points in the original email
+                          3. Match the response type and tone specified
+                          4. Keep the length concise and clear
+                          5. Use proper email formatting with salutation and signature
+                          
+                          Response Types:
+                          - Informative: Provide detailed information
+                          - Acknowledgment: Confirm receipt and next steps
+                          - Scheduling: Arrange meeting/call
+                          - Follow-up: Provide additional details
+                          - Courtesy: Polite and brief response
+
+                          Tone Options:
+                          - Professional: Formal, corporate language
+                          - Friendly: Warm, approachable
+                          - Neutral: Balanced, straightforward
+                          - Urgent: Emphasize importance
+                          
+                          Do not include any placeholders or extra text. Generate a complete, ready-to-send email response.`
+                  }
+              ]
+          }
+      ]
+  };
+
+  try {
+      const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(requestBody),
+          }
+      );
+
+      const data = await response.json();
+      const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate response";
+
+      // Add some basic formatting to the email
+      outputDiv.innerHTML = `
+          <div class="email-response">
+              <div class="email-header">Email Response</div>
+              <pre class="email-content">${outputText}</pre>
+          </div>
+      `;
+
+      // Update history
+      historyStack.push(outputText);
+      if (historyStack.length > MAX_HISTORY) historyStack.shift();
+
+      // Show download buttons
+      document.getElementById("email-download-buttons").style.display = "flex";
+  } catch (error) {
+      console.error("Error generating email response:", error);
+      outputDiv.innerHTML = `Error: ${error.message}. Please check your internet connection and API key.`;
+  } finally {
+      spinner.style.display = "none";
+  }
+}
+
+// Download Email Response as PDF
+function downloadEmailPDF() {
+  const outputText = document.getElementById("email-response-output").innerText;
+  const doc = new jspdf.jsPDF();
+  doc.setFontSize(12);
+  doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
+  doc.save("email-response.pdf");
+}
+
+// Download Email Response as DOCX
+function downloadEmailDOCX() {
+  const outputText = document.getElementById("email-response-output").innerText;
+  const doc = new docx.Document({
+      sections: [
+          {
+              children: [new docx.Paragraph(outputText)],
+          },
+      ],
+  });
+  docx.Packer.toBlob(doc).then((blob) => saveAs(blob, "email-response.docx"));
 }
