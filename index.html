@@ -57,12 +57,21 @@
                     </select>
                 </div>
                 <div class="letter-inputs">
-                    <textarea id="context-input" placeholder="Enter the context or background information for your letter..." rows="3"></textarea>
-                    <textarea id="key-points-input" placeholder="Enter the key points you want to include in your letter..." rows="3"></textarea>
                     <div class="input-row">
-                        <input type="text" id="sender-info" placeholder="Your name and contact information">
-                        <input type="text" id="recipient-info" placeholder="Recipient's name and details">
+                        <input type="text" id="student-name" placeholder="Student's Full Name">
+                        <input type="text" id="recommender-name" placeholder="Recommender's Name">
                     </div>
+                    <div class="input-row">
+                        <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
+                        <select id="lor-type">
+                            <option value="academic">Academic</option>
+                            <option value="professional">Professional</option>
+                            <option value="scholarship">Scholarship</option>
+                        </select>
+                    </div>
+                    <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
+                    <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
+                    <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
                 </div>
                 <button onclick="generateLetter()" class="button">Generate Letter</button>
                 <div class="loading-spinner"></div>
