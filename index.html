@@ -5,7 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>LOR and Cover Letter Generator</title>
         <link rel="stylesheet" href="styles.css">
-        <link rel="stylesheet" href="theme.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://unpkg.com/docx@8.0.0/build/index.js"></script>
@@ -14,7 +13,13 @@
 <body>
     <nav class="navbar">
         <h1 class="navbar-title">LOR and Cover Letter Generator</h1>
-        <button class="api-key-button" onclick="openDialog()">Add API Key</button>
+        <div class="navbar-buttons">
+            <button class="resume-button" onclick="openResumeDialog()" style="display: none;">Add Resume</button>
+            <button class="api-key-button" onclick="openDialog()">Add API Key</button>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">
+                <!-- theme toggle SVG content -->
+            </button>
+        </div>
     </nav>
     
     <div id="api-key-dialog" class="dialog">
@@ -90,9 +95,12 @@
                 <h3>Know Your Resume</h3>
                 <div class="resume-input-container">
                     <textarea id="resume-text" placeholder="Paste your resume here..." rows="10"></textarea>
-                    <button onclick="startResumeAnalysis()" class="button">Analyze Resume</button>
+                    <button onclick="analyzeResume()" class="button">Analyze Resume</button>
                 </div>
-                <div class="loading-spinner"></div>
+                <div class="resume-loader" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Analyzing your resume...</div>
+                </div>
                 <div id="resume-output"></div>
                 <div id="interview-container" class="interview-container hidden">
                     <div id="interview-questions"></div>
@@ -142,6 +150,31 @@
                 <div id="email-download-buttons" class="download-buttons" style="display: none;">
                     <button onclick="enableEditing('email-response-output')">Edit</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Resume Dialog -->
+    <div id="resume-dialog" class="dialog">
+        <div class="dialog-content">
+            <span class="close" onclick="closeResumeDialog()">&times;</span>
+            <h2>Add Your Resume</h2>
+            <textarea id="stored-resume" placeholder="Paste your resume here..." rows="10"></textarea>
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Note: Resume is stored locally in your browser only.
+            </small>
+            <button onclick="saveResume()" class="savebtn">Save Resume</button>
+        </div>
+    </div>
+
+    <!-- Add this after your other dialogs -->
+    <div id="confirm-dialog" class="dialog">
+        <div class="dialog-content">
+            <h2>Confirm Clear Resume</h2>
+            <p style="margin: 1rem 0;">Are you sure you want to clear your stored resume?</p>
+            <div class="confirm-buttons">
+                <button onclick="confirmClearResume()" class="confirm-btn">Yes, Clear</button>
+                <button onclick="closeConfirmDialog()" class="cancel-btn">Cancel</button>
             </div>
         </div>
     </div>

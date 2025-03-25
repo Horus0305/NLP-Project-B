@@ -20,12 +20,14 @@ function saveApiKey() {
   const apiKey = document.getElementById("api-key-input").value.trim();
   const message = document.getElementById("api-key-message");
   const apiKeyButton = document.querySelector(".api-key-button");
+  const resumeButton = document.querySelector(".resume-button");
 
   if (apiKey) {
     localStorage.setItem("geminiApiKey", apiKey);
     message.style.display = "none";
     document.getElementById("application-tabs").style.display = "block";
     apiKeyButton.style.display = "none";
+    resumeButton.style.display = "block";
     closeDialog();
     showTab("letter");
   } else {
@@ -62,6 +64,13 @@ function showTab(tab) {
   } else if (tab === "resume") {
     tabContent.style.display = "block";
     resumeContent.style.display = "block";
+    
+    // Auto-fill resume text if available
+    const storedResume = localStorage.getItem('userResume');
+    const resumeTextArea = document.getElementById('resume-text');
+    if (storedResume && resumeTextArea) {
+        resumeTextArea.value = storedResume;
+    }
   } else if (tab === "email") {
     tabContent.style.display = "block";
     emailContent.style.display = "block";
@@ -178,12 +187,15 @@ async function generateLetter() {
       return;
     }
   
+    const useResume = document.getElementById('use-resume')?.checked;
+    const storedResume = useResume ? localStorage.getItem('userResume') : '';
+    
     let requestData = { 
-      senderInfo, 
-      recipientInfo, 
-      context, 
-      keyPoints,
-      type: letterType === 'other' ? 'General Letter' : letterType.toUpperCase()
+        senderInfo, 
+        recipientInfo, 
+        context, 
+        keyPoints: useResume ? `${keyPoints}\n\nResume:\n${storedResume}` : keyPoints,
+        type: letterType === 'other' ? 'General Letter' : letterType.toUpperCase()
     };
   
     // Special handling for LOR fields if needed
@@ -206,7 +218,7 @@ async function generateLetter() {
         senderInfo: recommenderName,
         recipientInfo: studentName,
         context: `${relationship} - ${courses}`,
-        keyPoints: achievements,
+        keyPoints: useResume ? `${achievements}\n\nResume:\n${storedResume}` : achievements,
         purpose: purpose,
         type: lorType,
       };
@@ -493,6 +505,7 @@ function updateInputFields() {
   const inputsContainer = document.querySelector('.letter-inputs');
   const outputDiv = document.getElementById('letter-output');
   const downloadButtons = document.getElementById('download-buttons');
+  const storedResume = localStorage.getItem('userResume');
   
   // Clear the output and hide download buttons
   if (outputDiv) {
@@ -502,72 +515,119 @@ function updateInputFields() {
     downloadButtons.style.display = 'none';
   }
 
+  // Add resume checkbox HTML
+  const resumeCheckboxHTML = storedResume ? `
+      <div class="resume-checkbox-container">
+          <label class="resume-checkbox-label">
+              <input type="checkbox" id="use-resume" class="resume-checkbox">
+              Use the Added Resume
+          </label>
+      </div>
+  ` : '';
+
   // Define input fields for each letter type
   const inputFields = {
     lor: `
-            <div class="input-row">
-                <input type="text" id="student-name" placeholder="Student's Full Name">
-                <input type="text" id="recommender-name" placeholder="Recommender's Name">
-            </div>
-            <div class="input-row">
-                <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
-                <select id="lor-type">
-                    <option value="academic">Academic</option>
-                    <option value="professional">Professional</option>
-                    <option value="scholarship">Scholarship</option>
-                </select>
-            </div>
-            <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
-            <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
-            <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
-        `,
+        ${resumeCheckboxHTML}
+        <div class="input-row">
+            <input type="text" id="student-name" placeholder="Student's Full Name">
+            <input type="text" id="recommender-name" placeholder="Recommender's Name">
+        </div>
+        <div class="input-row">
+            <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
+            <select id="lor-type">
+                <option value="academic">Academic</option>
+                <option value="professional">Professional</option>
+                <option value="scholarship">Scholarship</option>
+            </select>
+        </div>
+        <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
+        <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
+        <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
+    `,
     job: `
-            <textarea id="context-input" placeholder="Enter job description and role details..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your relevant experience and qualifications..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and contact information">
-                <input type="text" id="recipient-info" placeholder="Company name and hiring manager details">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter job description and role details..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your relevant experience and qualifications..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and contact information">
+            <input type="text" id="recipient-info" placeholder="Company name and hiring manager details">
+        </div>
+    `,
     cover: `
-            <textarea id="context-input" placeholder="Enter position details and company information..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your relevant skills and experiences..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and contact information">
-                <input type="text" id="recipient-info" placeholder="Hiring manager's name and title">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter position details and company information..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your relevant skills and experiences..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and contact information">
+            <input type="text" id="recipient-info" placeholder="Hiring manager's name and title">
+        </div>
+    `,
     sop: `
-            <textarea id="context-input" placeholder="Enter your academic background and research interests..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your achievements, goals, and motivation..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and current institution">
-                <input type="text" id="recipient-info" placeholder="Target program/university name">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter your academic background and research interests..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your achievements, goals, and motivation..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and current institution">
+            <input type="text" id="recipient-info" placeholder="Target program/university name">
+        </div>
+    `,
     other: `
+        ${resumeCheckboxHTML}
         <textarea id="context-input" placeholder="Letter purpose (e.g., Leave application, Medical request)" rows="2"></textarea>
         <textarea id="key-points-input" placeholder="Key details (dates, reasons, supporting information)" rows="3"></textarea>
         <div class="input-row">
             <input type="text" id="sender-info" placeholder="Your name and position">
             <input type="text" id="recipient-info" placeholder="Recipient's name and title">
         </div>
-      `,
-    };
+    `,
+  };
 
   // Update the input fields
   inputsContainer.innerHTML = inputFields[letterType];
 }
 
 // Initialization
-window.onload = function () {
-  const storedApiKey = localStorage.getItem("geminiApiKey");
-  if (storedApiKey) {
-    document.querySelector(".api-key-button").style.display = "none";
-    document.getElementById("api-key-message").style.display = "none";
-    document.getElementById("application-tabs").style.display = "block";
-    showTab("letter");
-  }
+window.onload = function() {
+    // First handle API key check
+    const storedApiKey = localStorage.getItem("geminiApiKey");
+    const resumeButton = document.querySelector(".resume-button");
+    
+    if (storedApiKey) {
+        document.querySelector(".api-key-button").style.display = "none";
+        document.getElementById("api-key-message").style.display = "none";
+        document.getElementById("application-tabs").style.display = "block";
+        resumeButton.style.display = "block"; // Show resume button if API key exists
+        showTab("letter");
+    } else {
+        resumeButton.style.display = "none"; // Hide resume button if no API key
+    }
+
+    // Add theme toggle button to navbar
+    const navbar = document.querySelector('.navbar-buttons');
+    if (!document.getElementById('theme-toggle')) {
+        const themeToggleButton = document.createElement('button');
+        themeToggleButton.id = 'theme-toggle';
+        themeToggleButton.className = 'theme-toggle';
+        themeToggleButton.setAttribute('aria-label', 'Toggle theme');
+        themeToggleButton.onclick = toggleTheme;
+        navbar.appendChild(themeToggleButton);
+    }
+
+    // Initialize theme
+    initTheme();
+
+    // Auto-fill resume text area if available
+    const storedResume = localStorage.getItem('userResume');
+    if (storedResume && document.getElementById('resume-text')) {
+        document.getElementById('resume-text').value = storedResume;
+    }
+
+    // Initialize resume button state
+    updateResumeButton();
+    
+    // Update input fields to show checkbox if resume exists
+    updateInputFields();
 };
 
 window.onclick = function (event) {
@@ -576,8 +636,8 @@ window.onclick = function (event) {
   }
 };
 
-// In the startResumeAnalysis function, replace the prompt with:
-async function startResumeAnalysis() {
+// Change function name from startResumeAnalysis to analyzeResume
+async function analyzeResume() {
     const resumeText = document.getElementById("resume-text").value.trim();
     if (!resumeText) {
         alert("Please paste your resume first");
@@ -585,60 +645,116 @@ async function startResumeAnalysis() {
     }
 
     const apiKey = localStorage.getItem("geminiApiKey");
-    const spinner = document.querySelector(".loading-spinner");
-    spinner.style.display = "block";
+    const loader = document.querySelector(".resume-loader");
+    const outputDiv = document.getElementById("resume-output");
+    
+    // Clear previous output and show loader
+    outputDiv.innerHTML = '';
+    loader.style.display = "flex";
 
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Analyze this resume and generate interview preparation items:
-                                ${resumeText}
+    // Maximum number of retries
+    const maxRetries = 3;
+    let attempt = 0;
 
-                                Requirements:
-                                1. For each item provide:
-                                    - Question type (Technical/Behavioral/Scenario)
-                                    - Specific question
-                                    - Concise answer (2-3 sentences)
-                                    - 3-4 key bullet points
-                                2. Format response as valid JSON:
-                                {
-                                    "items": [
-                                        {
-                                            "type": "question type",
-                                            "question": "text",
-                                            "answer": "2-3 sentence answer",
-                                            "keyPoints": ["point1", "point2"]
-                                        }
-                                    ]
-                                }
-                                3. Focus on technical implementations and measurable outcomes
-                                4. Include specific tools/technologies mentioned in resume`
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Analyze this resume and generate interview preparation items:
+                                    ${resumeText}
+
+                                    Requirements:
+                                    1. For each item provide:
+                                        - Question type (Technical/Behavioral/Scenario)
+                                        - Specific question
+                                        - Concise answer (2-3 sentences)
+                                        - 3-4 key bullet points
+                                    2. Format response as valid JSON:
+                                    {
+                                        "items": [
+                                            {
+                                                "type": "question type",
+                                                "question": "text",
+                                                "answer": "2-3 sentence answer",
+                                                "keyPoints": ["point1", "point2"]
+                                            }
+                                        ]
+                                    }
+                                    3. Focus on technical implementations and measurable outcomes
+                                    4. Include specific tools/technologies mentioned in resume`
+                            }]
                         }]
-                    }]
-                })
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                // If it's a 503 error, retry after a delay
+                if (response.status === 503) {
+                    attempt++;
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                        continue;
+                    }
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        );
 
-        const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
-        const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
-        const interviewData = JSON.parse(cleanJSON);
-        
-        displayInterviewItems(interviewData.items);
-        document.getElementById("interview-container").classList.remove("hidden");
+            const data = await response.json();
+            
+            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response structure from API');
+            }
 
-    } catch (error) {
-        console.error("Error generating Q&A:", error);
-        alert("Error generating questions. Please try again.");
-    } finally {
-        spinner.style.display = "none";
+            const textResponse = data.candidates[0].content.parts[0].text;
+            if (!textResponse) {
+                throw new Error('Empty response from API');
+            }
+
+            const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
+            
+            try {
+                const interviewData = JSON.parse(cleanJSON);
+                if (!interviewData || !interviewData.items || !Array.isArray(interviewData.items)) {
+                    throw new Error('Invalid JSON structure');
+                }
+                
+                displayInterviewItems(interviewData.items);
+                document.getElementById("interview-container").classList.remove("hidden");
+                break; // Success! Exit the retry loop
+            } catch (jsonError) {
+                throw new Error(`Failed to parse response: ${jsonError.message}`);
+            }
+
+        } catch (error) {
+            attempt++;
+            if (attempt === maxRetries || error.message !== 'HTTP error! status: 503') {
+                console.error("Error generating Q&A:", error);
+                outputDiv.innerHTML = `
+                    <div class="error-message">
+                        ${attempt === maxRetries ? 
+                            'Service is temporarily unavailable. Please try again in a few moments.' : 
+                            'Error analyzing resume. Please try again.'}
+                        <br>
+                        <small style="display: block; margin-top: 0.5rem; color: #666;">
+                            Error details: ${error.message}
+                        </small>
+                    </div>`;
+                break;
+            }
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
     }
+
+    // Hide loader when done
+    loader.style.display = "none";
 }
 
 // Updated display function
@@ -868,13 +984,8 @@ function downloadEmailDOCX() {
 // Dark/Light Mode Functionality
 function toggleTheme() {
   const htmlElement = document.documentElement;
-  const themeToggle = document.getElementById('theme-toggle');
   const isDarkMode = htmlElement.classList.toggle('dark-mode');
-
-  // Update localStorage
   localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-
-  // Update toggle icon
   updateThemeToggleIcon(isDarkMode);
 }
 
@@ -885,44 +996,108 @@ function updateThemeToggleIcon(isDarkMode) {
       : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
 }
 
-// Initialize theme on page load
+// Update the initTheme function
 function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  const htmlElement = document.documentElement;
-  
-  if (savedTheme === 'dark') {
-      htmlElement.classList.add('dark-mode');
-  } else {
-      htmlElement.classList.remove('dark-mode');
-  }
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const htmlElement = document.documentElement;
+    
+    if (savedTheme === 'dark') {
+        htmlElement.classList.add('dark-mode');
+    } else {
+        htmlElement.classList.remove('dark-mode');
+    }
 
-  updateThemeToggleIcon(savedTheme === 'dark');
+    // Ensure the toggle button exists and update its icon
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        updateThemeToggleIcon(savedTheme === 'dark');
+    }
 }
 
-// Add theme toggle to the navbar
-function addThemeToggle() {
-  const navbar = document.querySelector('.navbar');
-  const themeToggleButton = document.createElement('button');
-  themeToggleButton.id = 'theme-toggle';
-  themeToggleButton.className = 'theme-toggle';
-  themeToggleButton.setAttribute('aria-label', 'Toggle theme');
-  themeToggleButton.onclick = toggleTheme;
-  
-  // Initial icon will be set by initTheme
-  navbar.appendChild(themeToggleButton);
+function openResumeDialog() {
+    const dialog = document.getElementById('resume-dialog');
+    const storedResume = localStorage.getItem('userResume');
+    const resumeTextarea = document.getElementById('stored-resume');
+    
+    if (storedResume) {
+        resumeTextarea.value = storedResume;
+    }
+    
+    dialog.style.display = 'block';
 }
 
-// Modify existing window.onload to include theme initialization
-const existingOnload = window.onload;
-window.onload = function() {
-  // Call existing onload function if it exists
-  if (existingOnload) {
-      existingOnload();
-  }
-  
-  // Add theme toggle to navbar
-  addThemeToggle();
-  
-  // Initialize theme
-  initTheme();
-};
+function closeResumeDialog() {
+    document.getElementById('resume-dialog').style.display = 'none';
+}
+
+function saveResume() {
+    const resumeText = document.getElementById('stored-resume').value.trim();
+    if (resumeText) {
+        localStorage.setItem('userResume', resumeText);
+        closeResumeDialog();
+        updateResumeButton();
+        
+        // Update the current input fields to show checkbox
+        updateInputFields();
+        
+        // Auto-fill resume analysis textarea if on the resume tab
+        const resumeContent = document.getElementById('resume-content');
+        const resumeAnalysisTextarea = document.getElementById('resume-text');
+        if (resumeContent.style.display === 'block' && resumeAnalysisTextarea) {
+            resumeAnalysisTextarea.value = resumeText;
+        }
+        
+        // Show success message
+        const message = document.createElement('div');
+        message.className = 'success-message';
+        message.textContent = 'Resume saved successfully!';
+        document.body.appendChild(message);
+        setTimeout(() => message.remove(), 3000);
+    } else {
+        alert('Please enter your resume text.');
+    }
+}
+
+// Add these functions
+function updateResumeButton() {
+    const resumeButton = document.querySelector('.resume-button');
+    const hasResume = localStorage.getItem('userResume');
+    
+    if (hasResume) {
+        resumeButton.textContent = 'Clear Resume';
+        resumeButton.onclick = openConfirmDialog;
+    } else {
+        resumeButton.textContent = 'Add Resume';
+        resumeButton.onclick = openResumeDialog;
+    }
+}
+
+function openConfirmDialog() {
+    document.getElementById('confirm-dialog').style.display = 'block';
+}
+
+function closeConfirmDialog() {
+    document.getElementById('confirm-dialog').style.display = 'none';
+}
+
+function confirmClearResume() {
+    localStorage.removeItem('userResume');
+    closeConfirmDialog();
+    updateResumeButton();
+    
+    // Update input fields to remove checkbox
+    updateInputFields();
+    
+    // Clear the resume analysis textarea if it exists
+    const resumeAnalysisTextarea = document.getElementById('resume-text');
+    if (resumeAnalysisTextarea) {
+        resumeAnalysisTextarea.value = '';
+    }
+    
+    // Show success message
+    const message = document.createElement('div');
+    message.className = 'success-message';
+    message.textContent = 'Resume cleared successfully!';
+    document.body.appendChild(message);
+    setTimeout(() => message.remove(), 3000);
+}
