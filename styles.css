@@ -978,3 +978,32 @@ textarea {
     line-height: 1.5;
     resize: vertical;
 }
+
+.dark-mode .email-response {
+    background: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+}
+
+.dark-mode .email-header {
+    color: var(--dark-primary-color);
+    border-bottom-color: var(--dark-border-color);
+}
+
+.dark-mode .email-content {
+    background: #334155;
+    color: var(--dark-text-color);
+}
+
+.dark-mode .email-options {
+    background: #1e293b;
+}
+
+.dark-mode .email-options label {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .email-options select {
+    background: var(--dark-card-bg);
+    color: var(--dark-text-color);
+    border-color: var(--dark-border-color);
+}
