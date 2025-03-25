@@ -645,12 +645,12 @@ async function analyzeResume() {
     }
 
     const apiKey = localStorage.getItem("geminiApiKey");
-    const loader = document.querySelector(".resume-loader");
+    const spinner = document.querySelector("#resume-content .loading-spinner");
     const outputDiv = document.getElementById("resume-output");
     
     // Clear previous output and show loader
     outputDiv.innerHTML = '';
-    loader.style.display = "flex";
+    spinner.style.display = "block";
 
     // Maximum number of retries
     const maxRetries = 3;
@@ -748,13 +748,12 @@ async function analyzeResume() {
                     </div>`;
                 break;
             }
-            // Wait before retrying
             await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
     }
 
     // Hide loader when done
-    loader.style.display = "none";
+    spinner.style.display = "none";
 }
 
 // Updated display function
@@ -862,101 +861,132 @@ function downloadInterviewPrep() {
   }
 }
 
-// Add this to the existing script.js file
-
 // Email Response Generator Function
 async function generateEmailResponse() {
-  const spinner = document.querySelector(".loading-spinner");
-  const apiKey = localStorage.getItem("geminiApiKey");
-  const outputDiv = document.getElementById("email-response-output");
-  const originalEmailInput = document.getElementById("original-email-input");
-  const responseTypeSelect = document.getElementById("response-type");
-  const toneSelect = document.getElementById("response-tone");
+    const spinner = document.querySelector("#email-content .loading-spinner");
+    const apiKey = localStorage.getItem("geminiApiKey");
+    const outputDiv = document.getElementById("email-response-output");
+    const originalEmailInput = document.getElementById("original-email-input");
+    const responseTypeSelect = document.getElementById("response-type");
+    const toneSelect = document.getElementById("response-tone");
 
-  // Clear previous output and hide download buttons
-  outputDiv.innerHTML = '';
-  document.getElementById("email-download-buttons").style.display = "none";
-  spinner.style.display = "block";
+    // Clear previous output and hide download buttons
+    outputDiv.innerHTML = '';
+    document.getElementById("email-download-buttons").style.display = "none";
+    spinner.style.display = "block";
 
-  // Validate input
-  const originalEmail = originalEmailInput.value.trim();
-  if (!originalEmail) {
-      outputDiv.innerHTML = "Please paste the original email.";
-      spinner.style.display = "none";
-      return;
-  }
+    // Validate input
+    const originalEmail = originalEmailInput.value.trim();
+    if (!originalEmail) {
+        outputDiv.innerHTML = "Please paste the original email.";
+        spinner.style.display = "none";
+        return;
+    }
 
-  // Prepare request body
-  const requestBody = {
-      contents: [
-          {
-              parts: [
-                  {
-                      text: `Generate an email response with the following requirements:
-                          Original Email: ${originalEmail}
-                          Response Type: ${responseTypeSelect.value}
-                          Tone: ${toneSelect.value}
+    // Maximum number of retries
+    const maxRetries = 3;
+    let attempt = 0;
 
-                          Guidelines:
-                          1. Craft a professional and appropriate response
-                          2. Directly address the key points in the original email
-                          3. Match the response type and tone specified
-                          4. Keep the length concise and clear
-                          5. Use proper email formatting with salutation and signature
-                          
-                          Response Types:
-                          - Informative: Provide detailed information
-                          - Acknowledgment: Confirm receipt and next steps
-                          - Scheduling: Arrange meeting/call
-                          - Follow-up: Provide additional details
-                          - Courtesy: Polite and brief response
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Generate an email response with the following requirements:
+                                    Original Email: ${originalEmail}
+                                    Response Type: ${responseTypeSelect.value}
+                                    Tone: ${toneSelect.value}
 
-                          Tone Options:
-                          - Professional: Formal, corporate language
-                          - Friendly: Warm, approachable
-                          - Neutral: Balanced, straightforward
-                          - Urgent: Emphasize importance
-                          
-                          Do not include any placeholders or extra text. Generate a complete, ready-to-send email response.`
-                  }
-              ]
-          }
-      ]
-  };
+                                    Guidelines:
+                                    1. Craft a professional and appropriate response
+                                    2. Directly address the key points in the original email
+                                    3. Match the response type and tone specified
+                                    4. Keep the length concise and clear
+                                    5. Use proper email formatting with salutation and signature
+                                    
+                                    Response Types:
+                                    - Informative: Provide detailed information
+                                    - Acknowledgment: Confirm receipt and next steps
+                                    - Scheduling: Arrange meeting/call
+                                    - Follow-up: Provide additional details
+                                    - Courtesy: Polite and brief response
 
-  try {
-      const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(requestBody),
-          }
-      );
+                                    Tone Options:
+                                    - Professional: Formal, corporate language
+                                    - Friendly: Warm, approachable
+                                    - Neutral: Balanced, straightforward
+                                    - Urgent: Emphasize importance
+                                    
+                                    Do not include any placeholders or extra text. Generate a complete, ready-to-send email response.`
+                            }]
+                        }]
+                    })
+                }
+            );
 
-      const data = await response.json();
-      const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate response";
+            if (!response.ok) {
+                // If it's a 503 error, retry after a delay
+                if (response.status === 503) {
+                    attempt++;
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                        continue;
+                    }
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-      // Add some basic formatting to the email
-      outputDiv.innerHTML = `
-          <div class="email-response">
-              <div class="email-header">Email Response</div>
-              <pre class="email-content">${outputText}</pre>
-          </div>
-      `;
+            const data = await response.json();
+            
+            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response structure from API');
+            }
 
-      // Update history
-      historyStack.push(outputText);
-      if (historyStack.length > MAX_HISTORY) historyStack.shift();
+            const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate response";
 
-      // Show download buttons
-      document.getElementById("email-download-buttons").style.display = "flex";
-  } catch (error) {
-      console.error("Error generating email response:", error);
-      outputDiv.innerHTML = `Error: ${error.message}. Please check your internet connection and API key.`;
-  } finally {
-      spinner.style.display = "none";
-  }
+            // Add some basic formatting to the email
+            outputDiv.innerHTML = `
+                <div class="email-response">
+                    <div class="email-header">Email Response</div>
+                    <pre class="email-content">${outputText}</pre>
+                </div>
+            `;
+
+            // Update history
+            historyStack.push(outputText);
+            if (historyStack.length > MAX_HISTORY) historyStack.shift();
+
+            // Show download buttons
+            document.getElementById("email-download-buttons").style.display = "flex";
+            break; // Success! Exit the retry loop
+
+        } catch (error) {
+            attempt++;
+            if (attempt === maxRetries || error.message !== 'HTTP error! status: 503') {
+                console.error("Error generating email response:", error);
+                outputDiv.innerHTML = `
+                    <div class="error-message">
+                        ${attempt === maxRetries ? 
+                            'Service is temporarily unavailable. Please try again in a few moments.' : 
+                            'Error generating email response. Please try again.'}
+                        <br>
+                        <small style="display: block; margin-top: 0.5rem; color: #666;">
+                            Error details: ${error.message}
+                        </small>
+                    </div>`;
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+    }
+
+    // Hide spinner when done
+    spinner.style.display = "none";
 }
 
 // Download Email Response as PDF
