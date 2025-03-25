@@ -6,6 +6,30 @@
     --card-bg: #ffffff;
     --text-color: #1e293b;
     --border-color: #cbd5e1;
+    
+    /* Dark mode variables */
+    --dark-primary-color: #7c7fff;
+    --dark-secondary-color: #6a5aff;
+    --dark-background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --dark-card-bg: #1e293b;
+    --dark-text-color: #e2e8f0;
+    --dark-border-color: #334155;
+}
+
+/* Dark Mode */
+.dark-mode {
+    --primary-color: var(--dark-primary-color);
+    --secondary-color: var(--dark-secondary-color);
+    --background: var(--dark-background);
+    --card-bg: var(--dark-card-bg);
+    --text-color: var(--dark-text-color);
+    --border-color: var(--dark-border-color);
+}
+
+body {
+    background: var(--background);
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
 }
 
 /* Base Styles */

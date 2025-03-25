@@ -864,3 +864,65 @@ function downloadEmailDOCX() {
   });
   docx.Packer.toBlob(doc).then((blob) => saveAs(blob, "email-response.docx"));
 }
+
+// Dark/Light Mode Functionality
+function toggleTheme() {
+  const htmlElement = document.documentElement;
+  const themeToggle = document.getElementById('theme-toggle');
+  const isDarkMode = htmlElement.classList.toggle('dark-mode');
+
+  // Update localStorage
+  localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+
+  // Update toggle icon
+  updateThemeToggleIcon(isDarkMode);
+}
+
+function updateThemeToggleIcon(isDarkMode) {
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.innerHTML = isDarkMode 
+      ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+}
+
+// Initialize theme on page load
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  const htmlElement = document.documentElement;
+  
+  if (savedTheme === 'dark') {
+      htmlElement.classList.add('dark-mode');
+  } else {
+      htmlElement.classList.remove('dark-mode');
+  }
+
+  updateThemeToggleIcon(savedTheme === 'dark');
+}
+
+// Add theme toggle to the navbar
+function addThemeToggle() {
+  const navbar = document.querySelector('.navbar');
+  const themeToggleButton = document.createElement('button');
+  themeToggleButton.id = 'theme-toggle';
+  themeToggleButton.className = 'theme-toggle';
+  themeToggleButton.setAttribute('aria-label', 'Toggle theme');
+  themeToggleButton.onclick = toggleTheme;
+  
+  // Initial icon will be set by initTheme
+  navbar.appendChild(themeToggleButton);
+}
+
+// Modify existing window.onload to include theme initialization
+const existingOnload = window.onload;
+window.onload = function() {
+  // Call existing onload function if it exists
+  if (existingOnload) {
+      existingOnload();
+  }
+  
+  // Add theme toggle to navbar
+  addThemeToggle();
+  
+  // Initialize theme
+  initTheme();
+};
