@@ -94,26 +94,48 @@
             <div id="aptitude-content" style="display: none;">
                 <div class="aptitude-controls">
                     <h3>Aptitude Test</h3>
+                    <div class="test-settings">
+                        <div class="settings-row">
+                            <div class="setting-group">
+                                <label>Difficulty Level:</label>
+                                <select id="difficulty-level">
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label>Number of Questions:</label>
+                                <input 
+                                    type="number" 
+                                    id="question-count" 
+                                    min="5" 
+                                    max="30" 
+                                    value="10" 
+                                    placeholder="Enter number (5-50)"
+                                >
+                                <small class="input-hint">Min: 5, Max: 30 questions</small>
+                            </div>
+                        </div>
+                    </div>
                     <div class="test-categories">
                         <div class="category-card" onclick="toggleCategory('quantitative')">
                             <h4>Quantitative</h4>
-                            <p>10 Questions</p>
+                            <p>Mathematical & Numerical Skills</p>
                         </div>
                         <div class="category-card" onclick="toggleCategory('verbal')">
                             <h4>Verbal</h4>
-                            <p>10 Questions</p>
+                            <p>Language & Communication</p>
                         </div>
                         <div class="category-card" onclick="toggleCategory('logical')">
                             <h4>Logical</h4>
-                            <p>10 Questions</p>
-                        </div>
-                        <div class="category-card" onclick="toggleCategory('coding')">
-                            <h4>Coding</h4>
-                            <p>10 Questions</p>
+                            <p>Reasoning & Problem Solving</p>
                         </div>
                     </div>
                     <button class="button2" onclick="startTest()">Start Test</button>
                 </div>
+            
+                <div class="loading-spinner"></div>
             
                 <div class="test-container">
                     <div class="question-counter"></div>

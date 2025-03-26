@@ -3,6 +3,64 @@ const MAX_HISTORY = 5;
 let currentQuestions = [];
 let currentQuestionIndex = -1;
 let userResponses = {};
+let selectedCategories = new Set();
+let currentTest = {
+    questions: [],
+    currentQuestionIndex: 0,
+    score: 0,
+    timeLeft: 0,
+    timer: null
+};
+
+// Add this object to store the topics for each category
+const categoryTopics = {
+    quantitative: [
+        "Percentage",
+        "Ratio and Proportion",
+        "Age Problems",
+        "Partnership",
+        "Allegations and Mix",
+        "Average",
+        "Time and Work",
+        "Pipes and Cistern",
+        "Profit and Loss",
+        "Probability",
+        "Simple and Compound Interest",
+        "Chain Rule",
+        "Train Problems",
+        "Boats and Streams",
+        "Permutation and Combination",
+        "Number System",
+        "HCF and LCM",
+        "Data Interpretation"
+    ],
+    verbal: [
+        "Reading Comprehension",
+        "Spotting Errors",
+        "Sentence Formation",
+        "Sentence Correction",
+        "Synonym & Antonym",
+        "Idioms and Phrases"
+    ],
+    logical: [
+        "Seating Arrangement",
+        "Clock Problems",
+        "Calendar",
+        "Blood Relations",
+        "Directions",
+        "Number Series",
+        "Word Pattern",
+        "Coding Decoding",
+        "Mathematical Operations",
+        "Venn Diagram",
+        "Visual Reasoning",
+        "Paper Cutting and Folding",
+        "Cubes and Dices",
+        "Data Sufficiency",
+        "Statement and Assumption",
+        "Statement and Conclusion"
+    ]
+};
 
 // Shared Functions
 function openDialog() {
@@ -40,6 +98,7 @@ function showTab(tab) {
   const jobContent = document.getElementById("job-application-content");
   const resumeContent = document.getElementById("resume-content");
   const emailContent = document.getElementById("email-content");
+  const aptitudeContent = document.getElementById("aptitude-content");
   const tabContent = document.getElementById("tab-content");
   const tabs = document.querySelectorAll(".tab-button");
 
@@ -56,6 +115,7 @@ function showTab(tab) {
   jobContent.style.display = "none";
   resumeContent.style.display = "none";
   if (emailContent) emailContent.style.display = "none";
+  if (aptitudeContent) aptitudeContent.style.display = "none";
 
   // Show selected tab content
   if (tab === "letter") {
@@ -64,7 +124,6 @@ function showTab(tab) {
   } else if (tab === "resume") {
     tabContent.style.display = "block";
     resumeContent.style.display = "block";
-<<<<<<< HEAD
     
     // Auto-fill resume text if available
     const storedResume = localStorage.getItem('userResume');
@@ -75,6 +134,9 @@ function showTab(tab) {
   } else if (tab === "email") {
     tabContent.style.display = "block";
     emailContent.style.display = "block";
+  } else if (tab === "aptitude") {
+    tabContent.style.display = "block";
+    aptitudeContent.style.display = "block";
   }
 }
 
@@ -1131,4 +1193,270 @@ function confirmClearResume() {
     message.textContent = 'Resume cleared successfully!';
     document.body.appendChild(message);
     setTimeout(() => message.remove(), 3000);
+}
+
+function toggleCategory(category) {
+    const card = document.querySelector(`.category-card[onclick*="${category}"]`);
+    if (card) {
+        if (selectedCategories.has(category)) {
+            selectedCategories.delete(category);
+            card.classList.remove('selected');
+        } else {
+            selectedCategories.add(category);
+            card.classList.add('selected');
+        }
+    }
+}
+
+// Update the startTest function to include topic distribution
+async function startTest() {
+    if (selectedCategories.size === 0) {
+        alert('Please select at least one category');
+        return;
+    }
+
+    const difficultyLevel = document.getElementById('difficulty-level').value;
+    const questionCountInput = document.getElementById('question-count');
+    const questionCount = parseInt(questionCountInput.value);
+
+    // Validate question count
+    if (isNaN(questionCount) || questionCount < 5 || questionCount > 50) {
+        alert('Please enter a valid number of questions (between 5 and 50)');
+        questionCountInput.focus();
+        return;
+    }
+
+    const apiKey = localStorage.getItem("geminiApiKey");
+    const spinner = document.querySelector("#aptitude-content .loading-spinner");
+    
+    try {
+        document.querySelector('.aptitude-controls').style.display = 'none';
+        document.querySelector('.test-container').style.display = 'block';
+        spinner.style.display = "block";
+
+        // Calculate questions per category
+        const selectedCategoriesArray = Array.from(selectedCategories);
+        const questionsPerCategory = Math.floor(questionCount / selectedCategoriesArray.length);
+        const extraQuestions = questionCount % selectedCategoriesArray.length;
+
+        // Create topic distribution prompt
+        const topicDistribution = selectedCategoriesArray.map((category, index) => {
+            const categoryQuestions = index < extraQuestions ? 
+                questionsPerCategory + 1 : 
+                questionsPerCategory;
+            
+            return `${category} (${categoryQuestions} questions): Choose from topics - ${categoryTopics[category].join(', ')}`;
+        }).join('\n');
+
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Generate an aptitude test with ${questionCount} multiple choice questions at ${difficultyLevel} difficulty level with the following distribution:
+
+                                ${topicDistribution}
+
+                                Format as JSON:
+                                {
+                                    "questions": [
+                                        {
+                                            "category": "category name",
+                                            "topic": "specific topic from the category",
+                                            "question": "question text",
+                                            "options": ["option1", "option2", "option3", "option4"],
+                                            "correct": 0,
+                                            "explanation": "detailed explanation of the solution",
+                                            "difficulty": "${difficultyLevel}"
+                                        }
+                                    ]
+                                }
+
+                                Requirements:
+                                1. Ensure even distribution of topics within each category
+                                2. Make questions appropriate for ${difficultyLevel} level
+                                3. Include step-by-step explanations
+                                4. Ensure correct answer index (0-3) matches options array
+                                5. For verbal questions, include clear grammar/vocabulary rules in explanations
+                                6. For logical questions, explain the reasoning pattern
+                                7. For quantitative questions, show the mathematical solution`
+                        }]
+                    }]
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const textResponse = data.candidates[0].content.parts[0].text;
+        const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
+        const testData = JSON.parse(cleanJSON);
+
+        currentTest = {
+            questions: testData.questions,
+            currentQuestionIndex: 0,
+            score: 0,
+            timeLeft: questionCount * 60, // 1 minute per question
+            timer: null
+        };
+
+        startTimer();
+        showQuestion();
+
+    } catch (error) {
+        console.error("Error starting test:", error);
+        alert('Error generating test questions. Please try again.');
+        document.querySelector('.aptitude-controls').style.display = 'block';
+        document.querySelector('.test-container').style.display = 'none';
+    } finally {
+        spinner.style.display = "none";
+    }
+}
+
+function startTimer() {
+    const timerDisplay = document.querySelector('.timer');
+    currentTest.timer = setInterval(() => {
+        currentTest.timeLeft--;
+        const minutes = Math.floor(currentTest.timeLeft / 60);
+        const seconds = currentTest.timeLeft % 60;
+        timerDisplay.textContent = `Time Left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        if (currentTest.timeLeft <= 0) {
+            clearInterval(currentTest.timer);
+            submitTest();
+        }
+    }, 1000);
+}
+
+function showQuestion() {
+    const question = currentTest.questions[currentTest.currentQuestionIndex];
+    
+    const questionCounter = document.querySelector('.question-counter');
+    const testQuestion = document.querySelector('.test-question');
+    const testOptions = document.querySelector('.test-options');
+    const nextButton = document.querySelector('.next-button');
+    const submitButton = document.querySelector('.submit-button');
+
+    questionCounter.innerHTML = `
+        <div class="counter-container">
+            <span class="question-number">Question ${currentTest.currentQuestionIndex + 1} of ${currentTest.questions.length}</span>
+            <div class="question-tags">
+                <span class="category-tag">${question.category}</span>
+                <span class="topic-tag">${question.topic}</span>
+            </div>
+        </div>
+    `;
+
+    testQuestion.textContent = question.question;
+
+    const optionsHtml = question.options.map((option, index) => `
+        <label class="option-label">
+            <div class="option-content">
+                <input type="radio" name="answer" value="${index}">
+                <span class="option-text">${option}</span>
+            </div>
+        </label>
+    `).join('');
+
+    testOptions.innerHTML = optionsHtml;
+
+    // Show next or submit button based on question number
+    nextButton.classList.toggle('hidden', currentTest.currentQuestionIndex === currentTest.questions.length - 1);
+    submitButton.classList.toggle('hidden', currentTest.currentQuestionIndex !== currentTest.questions.length - 1);
+}
+
+function nextQuestion() {
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    if (!selectedAnswer) {
+        alert('Please select an answer');
+        return;
+    }
+
+    // Store the user's response
+    userResponses[currentTest.currentQuestionIndex] = parseInt(selectedAnswer.value);
+
+    currentTest.currentQuestionIndex++;
+    showQuestion();
+}
+
+function submitTest() {
+    clearInterval(currentTest.timer);
+    
+    // Calculate score
+    currentTest.score = Object.entries(userResponses).reduce((score, [index, answer]) => {
+        return score + (answer === currentTest.questions[index].correct ? 1 : 0);
+    }, 0);
+
+    // Show results
+    document.querySelector('.test-container').style.display = 'none';
+    const resultsContainer = document.querySelector('.results-container');
+    resultsContainer.classList.remove('hidden');
+
+    document.getElementById('score').textContent = currentTest.score;
+    document.getElementById('total').textContent = currentTest.questions.length;
+
+    // Add legend for review
+    const legendHtml = `
+        <div class="review-legend">
+            <div class="legend-item">
+                <span class="legend-color correct"></span>
+                <span>Correct Answer</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color incorrect"></span>
+                <span>Your Answer</span>
+            </div>
+        </div>
+    `;
+
+    // Show review of questions
+    const reviewHtml = currentTest.questions.map((q, index) => `
+        <div class="review-question">
+            <div class="question-header">
+                <span class="question-number">Question ${index + 1}</span>
+                <div class="question-tags">
+                    <span class="category-tag">${q.category}</span>
+                    <span class="topic-tag">${q.topic}</span>
+                </div>
+            </div>
+            <div class="question-text">${q.question}</div>
+            <div class="review-options">
+                ${q.options.map((option, i) => `
+                    <div class="review-option ${i === userResponses[index] ? 'selected' : ''} ${i === q.correct ? 'correct' : ''}">
+                        ${option}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="explanation">
+                <strong>Explanation:</strong> ${q.explanation}
+            </div>
+        </div>
+    `).join('');
+
+    document.querySelector('.review-questions').innerHTML = legendHtml + reviewHtml;
+}
+
+function restartTest() {
+    // Reset test state
+    selectedCategories.clear();
+    currentTest = {
+        questions: [],
+        currentQuestionIndex: 0,
+        score: 0,
+        timeLeft: 0,
+        timer: null
+    };
+    userResponses = {};
+
+    // Reset UI
+    document.querySelectorAll('.category-card').forEach(card => card.classList.remove('selected'));
+    document.querySelector('.results-container').classList.add('hidden');
+    document.querySelector('.test-container').style.display = 'none';
+    document.querySelector('.aptitude-controls').style.display = 'block';
 }

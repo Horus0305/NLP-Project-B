@@ -1230,12 +1230,25 @@ textarea {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-<<<<<<< HEAD
-=======
 }
 
 /* Aptitude Test Styles */
 .aptitude-controls {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    margin: 2rem auto;
+    max-width: 800px;
+    position: relative;
+}
+
+#aptitude-content .loading-spinner {
+    display: none;
+    margin: 2rem auto;
+}
+
+.test-container {
+    display: none;
     background: var(--card-bg);
     padding: 2rem;
     border-radius: 16px;
@@ -1253,24 +1266,33 @@ textarea {
 .category-card {
     background: var(--card-bg);
     border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 1.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.category-card h4 {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.category-card p {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .category-card.selected {
     border-color: var(--primary-color);
     background: rgba(99, 102, 241, 0.1);
-}
-
-.test-container {
-    display: none;
-    background: var(--card-bg);
-    padding: 2rem;
-    border-radius: 16px;
-    margin: 2rem auto;
-    max-width: 800px;
 }
 
 .question-counter {
@@ -1291,26 +1313,74 @@ textarea {
 
 .option-label {
     display: block;
-    margin: 0.5rem 0;
-    padding: 1rem;
+    margin: 0.75rem 0;
+    padding: 1rem 1.5rem;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.option-label:hover {
-    border-color: var(--primary-color);
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.option-label.correct {
-    background: #dcfce7;
-    border-color: #22c55e;
+.option-content input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
 }
 
-.option-label.wrong {
-    background: #fee2e2;
-    border-color: #ef4444;
+.option-text {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Question Counter and Category Tag Styles */
+.counter-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.question-number {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.category-tag {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .category-card {
+    background: var(--dark-card-bg);
+}
+
+.dark-mode .category-card h4,
+.dark-mode .category-card p {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .option-text {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .question-number {
+    color: var(--dark-text-color);
 }
 
 .results-container {
@@ -1433,5 +1503,252 @@ textarea {
 
 .dark-mode .button2:hover {
     background-color: var(--dark-secondary-color);
->>>>>>> c0708369ad6c5c267b06347ee90a2e0ae0c7f65e
+}
+
+/* Add these new styles for test settings */
+.test-settings {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.settings-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting-group label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.setting-group select {
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.setting-group select:hover {
+    border-color: var(--primary-color);
+}
+
+.setting-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Dark mode adjustments */
+.dark-mode .test-settings {
+    background: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+}
+
+.dark-mode .setting-group label {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .setting-group select {
+    background: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+    color: var(--dark-text-color);
+}
+
+/* Update the setting group styles */
+.setting-group input[type="number"] {
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.setting-group input[type="number"]:hover {
+    border-color: var(--primary-color);
+}
+
+.setting-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.input-hint {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Dark mode adjustments */
+.dark-mode .setting-group input[type="number"] {
+    background: var(--dark-card-bg);
+    border-color: var(--dark-border-color);
+    color: var(--dark-text-color);
+}
+
+.dark-mode .input-hint {
+    color: var(--dark-text-color);
+    opacity: 0.6;
+}
+
+/* Remove up/down arrows from number input */
+.setting-group input[type="number"]::-webkit-inner-spin-button,
+.setting-group input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.setting-group input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Add styles for topic tags */
+.question-tags {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.topic-tag {
+    background: var(--secondary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.category-tag {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Add these styles for the review options */
+.review-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.review-option {
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    position: relative;
+    padding-left: 3rem;
+}
+
+.review-option::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+}
+
+/* Style for the selected (user's) answer */
+.review-option.selected {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.review-option.selected::before {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+/* Style for the correct answer */
+.review-option.correct {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+}
+
+.review-option.correct::before {
+    background: #22c55e;
+    border-color: #22c55e;
+}
+
+/* When the selected answer is also correct */
+.review-option.selected.correct {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+}
+
+/* Add legend for the review */
+.review-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-color.correct {
+    background: #22c55e;
+}
+
+.legend-color.incorrect {
+    background: #ef4444;
+}
+
+/* Dark mode adjustments */
+.dark-mode .review-option {
+    border-color: var(--dark-border-color);
+}
+
+.dark-mode .review-option.selected {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.dark-mode .review-option.correct {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.dark-mode .review-legend {
+    background: var(--dark-card-bg);
+    border: 1px solid var(--dark-border-color);
 }
