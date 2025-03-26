@@ -1250,19 +1250,76 @@ async function startTest() {
         document.querySelector('.test-container').style.display = 'block';
         spinner.style.display = "block";
 
+        // Create a timestamp to ensure uniqueness
+        const timestamp = new Date().getTime();
+        
+        // Generate random seed numbers for each category
+        const randomSeeds = {
+            quantitative: Math.floor(Math.random() * 1000),
+            verbal: Math.floor(Math.random() * 1000),
+            logical: Math.floor(Math.random() * 1000)
+        };
+
+        // Create variations for each category's questions
+        const variations = {
+            quantitative: {
+                valueRanges: [
+                    "Use numbers between 100-999",
+                    "Use numbers between 1000-9999",
+                    "Use decimals between 0.1-99.9",
+                    "Use percentages between 1%-100%"
+                ],
+                contextTypes: [
+                    "business scenarios",
+                    "daily life situations",
+                    "scientific contexts",
+                    "financial scenarios"
+                ]
+            },
+            verbal: {
+                textTypes: [
+                    "technical articles",
+                    "business communications",
+                    "academic texts",
+                    "general interest topics"
+                ]
+            },
+            logical: {
+                scenarios: [
+                    "workplace scenarios",
+                    "family relationships",
+                    "spatial arrangements",
+                    "temporal sequences"
+                ]
+            }
+        };
+
         // Calculate questions per category
         const selectedCategoriesArray = Array.from(selectedCategories);
         const questionsPerCategory = Math.floor(questionCount / selectedCategoriesArray.length);
         const extraQuestions = questionCount % selectedCategoriesArray.length;
 
-        // Create topic distribution prompt
+        // Create enhanced prompt with variations
         const topicDistribution = selectedCategoriesArray.map((category, index) => {
             const categoryQuestions = index < extraQuestions ? 
                 questionsPerCategory + 1 : 
                 questionsPerCategory;
             
-            return `${category} (${categoryQuestions} questions): Choose from topics - ${categoryTopics[category].join(', ')}`;
-        }).join('\n');
+            let categoryPrompt = `${category} (${categoryQuestions} questions): Choose from topics - ${categoryTopics[category].join(', ')}`;
+            
+            // Add category-specific variations
+            if (category === 'quantitative') {
+                categoryPrompt += `\nUse these variations:
+                - Values: ${variations.quantitative.valueRanges[randomSeeds.quantitative % 4]}
+                - Context: ${variations.quantitative.contextTypes[randomSeeds.quantitative % 4]}`;
+            } else if (category === 'verbal') {
+                categoryPrompt += `\nUse content from: ${variations.verbal.textTypes[randomSeeds.verbal % 4]}`;
+            } else if (category === 'logical') {
+                categoryPrompt += `\nUse scenarios from: ${variations.logical.scenarios[randomSeeds.logical % 4]}`;
+            }
+            
+            return categoryPrompt;
+        }).join('\n\n');
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -1272,9 +1329,24 @@ async function startTest() {
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
-                            text: `Generate an aptitude test with ${questionCount} multiple choice questions at ${difficultyLevel} difficulty level with the following distribution:
+                            text: `Generate a unique set of aptitude test questions (seed: ${timestamp}) with the following requirements:
 
+                                Distribution:
                                 ${topicDistribution}
+
+                                Requirements:
+                                1. Ensure all questions are unique and have not been used before
+                                2. Use the specified variations for each category
+                                3. Make questions appropriate for ${difficultyLevel} level
+                                4. For quantitative questions:
+                                   - Use different number ranges and scenarios
+                                   - Vary the complexity of calculations
+                                5. For verbal questions:
+                                   - Use diverse vocabulary and contexts
+                                   - Vary the complexity of language
+                                6. For logical questions:
+                                   - Use different patterns and scenarios
+                                   - Vary the complexity of reasoning
 
                                 Format as JSON:
                                 {
@@ -1286,19 +1358,11 @@ async function startTest() {
                                             "options": ["option1", "option2", "option3", "option4"],
                                             "correct": 0,
                                             "explanation": "detailed explanation of the solution",
-                                            "difficulty": "${difficultyLevel}"
+                                            "difficulty": "${difficultyLevel}",
+                                            "uniqueId": "timestamp_category_index"
                                         }
                                     ]
-                                }
-
-                                Requirements:
-                                1. Ensure even distribution of topics within each category
-                                2. Make questions appropriate for ${difficultyLevel} level
-                                3. Include step-by-step explanations
-                                4. Ensure correct answer index (0-3) matches options array
-                                5. For verbal questions, include clear grammar/vocabulary rules in explanations
-                                6. For logical questions, explain the reasoning pattern
-                                7. For quantitative questions, show the mathematical solution`
+                                }`
                         }]
                     }]
                 })
