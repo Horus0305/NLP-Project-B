@@ -20,12 +20,14 @@ function saveApiKey() {
   const apiKey = document.getElementById("api-key-input").value.trim();
   const message = document.getElementById("api-key-message");
   const apiKeyButton = document.querySelector(".api-key-button");
+  const resumeButton = document.querySelector(".resume-button");
 
   if (apiKey) {
     localStorage.setItem("geminiApiKey", apiKey);
     message.style.display = "none";
     document.getElementById("application-tabs").style.display = "block";
     apiKeyButton.style.display = "none";
+    resumeButton.style.display = "block";
     closeDialog();
     showTab("letter");
   } else {
@@ -38,6 +40,7 @@ function showTab(tab) {
   const jobContent = document.getElementById("job-application-content");
   const resumeContent = document.getElementById("resume-content");
   const emailContent = document.getElementById("email-content");
+  const aptitudeContent = document.getElementById("aptitude-content");
   const tabContent = document.getElementById("tab-content");
   const tabs = document.querySelectorAll(".tab-button");
 
@@ -53,7 +56,8 @@ function showTab(tab) {
   // Hide all content sections
   jobContent.style.display = "none";
   resumeContent.style.display = "none";
-  if (emailContent) emailContent.style.display = "none";
+  emailContent.style.display = "none";
+  aptitudeContent.style.display = "none";
 
   // Show selected tab content
   if (tab === "letter") {
@@ -62,9 +66,18 @@ function showTab(tab) {
   } else if (tab === "resume") {
     tabContent.style.display = "block";
     resumeContent.style.display = "block";
+    // Auto-fill resume text if available
+    const storedResume = localStorage.getItem('userResume');
+    const resumeTextArea = document.getElementById('resume-text');
+    if (storedResume && resumeTextArea) {
+        resumeTextArea.value = storedResume;
+    }
   } else if (tab === "email") {
     tabContent.style.display = "block";
     emailContent.style.display = "block";
+  } else if (tab === "aptitude") {
+    tabContent.style.display = "block";
+    aptitudeContent.style.display = "block";
   }
 }
 
@@ -178,12 +191,15 @@ async function generateLetter() {
       return;
     }
   
+    const useResume = document.getElementById('use-resume')?.checked;
+    const storedResume = useResume ? localStorage.getItem('userResume') : '';
+    
     let requestData = { 
-      senderInfo, 
-      recipientInfo, 
-      context, 
-      keyPoints,
-      type: letterType === 'other' ? 'General Letter' : letterType.toUpperCase()
+        senderInfo, 
+        recipientInfo, 
+        context, 
+        keyPoints: useResume ? `${keyPoints}\n\nResume:\n${storedResume}` : keyPoints,
+        type: letterType === 'other' ? 'General Letter' : letterType.toUpperCase()
     };
   
     // Special handling for LOR fields if needed
@@ -206,7 +222,7 @@ async function generateLetter() {
         senderInfo: recommenderName,
         recipientInfo: studentName,
         context: `${relationship} - ${courses}`,
-        keyPoints: achievements,
+        keyPoints: useResume ? `${achievements}\n\nResume:\n${storedResume}` : achievements,
         purpose: purpose,
         type: lorType,
       };
@@ -493,6 +509,7 @@ function updateInputFields() {
   const inputsContainer = document.querySelector('.letter-inputs');
   const outputDiv = document.getElementById('letter-output');
   const downloadButtons = document.getElementById('download-buttons');
+  const storedResume = localStorage.getItem('userResume');
   
   // Clear the output and hide download buttons
   if (outputDiv) {
@@ -502,72 +519,119 @@ function updateInputFields() {
     downloadButtons.style.display = 'none';
   }
 
+  // Add resume checkbox HTML
+  const resumeCheckboxHTML = storedResume ? `
+      <div class="resume-checkbox-container">
+          <label class="resume-checkbox-label">
+              <input type="checkbox" id="use-resume" class="resume-checkbox">
+              Use the Added Resume
+          </label>
+      </div>
+  ` : '';
+
   // Define input fields for each letter type
   const inputFields = {
     lor: `
-            <div class="input-row">
-                <input type="text" id="student-name" placeholder="Student's Full Name">
-                <input type="text" id="recommender-name" placeholder="Recommender's Name">
-            </div>
-            <div class="input-row">
-                <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
-                <select id="lor-type">
-                    <option value="academic">Academic</option>
-                    <option value="professional">Professional</option>
-                    <option value="scholarship">Scholarship</option>
-                </select>
-            </div>
-            <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
-            <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
-            <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
-        `,
+        ${resumeCheckboxHTML}
+        <div class="input-row">
+            <input type="text" id="student-name" placeholder="Student's Full Name">
+            <input type="text" id="recommender-name" placeholder="Recommender's Name">
+        </div>
+        <div class="input-row">
+            <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
+            <select id="lor-type">
+                <option value="academic">Academic</option>
+                <option value="professional">Professional</option>
+                <option value="scholarship">Scholarship</option>
+            </select>
+        </div>
+        <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
+        <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
+        <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
+    `,
     job: `
-            <textarea id="context-input" placeholder="Enter job description and role details..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your relevant experience and qualifications..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and contact information">
-                <input type="text" id="recipient-info" placeholder="Company name and hiring manager details">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter job description and role details..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your relevant experience and qualifications..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and contact information">
+            <input type="text" id="recipient-info" placeholder="Company name and hiring manager details">
+        </div>
+    `,
     cover: `
-            <textarea id="context-input" placeholder="Enter position details and company information..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your relevant skills and experiences..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and contact information">
-                <input type="text" id="recipient-info" placeholder="Hiring manager's name and title">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter position details and company information..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your relevant skills and experiences..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and contact information">
+            <input type="text" id="recipient-info" placeholder="Hiring manager's name and title">
+        </div>
+    `,
     sop: `
-            <textarea id="context-input" placeholder="Enter your academic background and research interests..." rows="3"></textarea>
-            <textarea id="key-points-input" placeholder="Enter your achievements, goals, and motivation..." rows="3"></textarea>
-            <div class="input-row">
-                <input type="text" id="sender-info" placeholder="Your name and current institution">
-                <input type="text" id="recipient-info" placeholder="Target program/university name">
-            </div>
-        `,
+        ${resumeCheckboxHTML}
+        <textarea id="context-input" placeholder="Enter your academic background and research interests..." rows="3"></textarea>
+        <textarea id="key-points-input" placeholder="Enter your achievements, goals, and motivation..." rows="3"></textarea>
+        <div class="input-row">
+            <input type="text" id="sender-info" placeholder="Your name and current institution">
+            <input type="text" id="recipient-info" placeholder="Target program/university name">
+        </div>
+    `,
     other: `
+        ${resumeCheckboxHTML}
         <textarea id="context-input" placeholder="Letter purpose (e.g., Leave application, Medical request)" rows="2"></textarea>
         <textarea id="key-points-input" placeholder="Key details (dates, reasons, supporting information)" rows="3"></textarea>
         <div class="input-row">
             <input type="text" id="sender-info" placeholder="Your name and position">
             <input type="text" id="recipient-info" placeholder="Recipient's name and title">
         </div>
-      `,
-    };
+    `,
+  };
 
   // Update the input fields
   inputsContainer.innerHTML = inputFields[letterType];
 }
 
 // Initialization
-window.onload = function () {
-  const storedApiKey = localStorage.getItem("geminiApiKey");
-  if (storedApiKey) {
-    document.querySelector(".api-key-button").style.display = "none";
-    document.getElementById("api-key-message").style.display = "none";
-    document.getElementById("application-tabs").style.display = "block";
-    showTab("letter");
-  }
+window.onload = function() {
+    // First handle API key check
+    const storedApiKey = localStorage.getItem("geminiApiKey");
+    const resumeButton = document.querySelector(".resume-button");
+    
+    if (storedApiKey) {
+        document.querySelector(".api-key-button").style.display = "none";
+        document.getElementById("api-key-message").style.display = "none";
+        document.getElementById("application-tabs").style.display = "block";
+        resumeButton.style.display = "block"; // Show resume button if API key exists
+        showTab("letter");
+    } else {
+        resumeButton.style.display = "none"; // Hide resume button if no API key
+    }
+
+    // Add theme toggle button to navbar
+    const navbar = document.querySelector('.navbar-buttons');
+    if (!document.getElementById('theme-toggle')) {
+        const themeToggleButton = document.createElement('button');
+        themeToggleButton.id = 'theme-toggle';
+        themeToggleButton.className = 'theme-toggle';
+        themeToggleButton.setAttribute('aria-label', 'Toggle theme');
+        themeToggleButton.onclick = toggleTheme;
+        navbar.appendChild(themeToggleButton);
+    }
+
+    // Initialize theme
+    initTheme();
+
+    // Auto-fill resume text area if available
+    const storedResume = localStorage.getItem('userResume');
+    if (storedResume && document.getElementById('resume-text')) {
+        document.getElementById('resume-text').value = storedResume;
+    }
+
+    // Initialize resume button state
+    updateResumeButton();
+    
+    // Update input fields to show checkbox if resume exists
+    updateInputFields();
 };
 
 window.onclick = function (event) {
@@ -576,8 +640,8 @@ window.onclick = function (event) {
   }
 };
 
-// In the startResumeAnalysis function, replace the prompt with:
-async function startResumeAnalysis() {
+// Change function name from startResumeAnalysis to analyzeResume
+async function analyzeResume() {
     const resumeText = document.getElementById("resume-text").value.trim();
     if (!resumeText) {
         alert("Please paste your resume first");
@@ -585,60 +649,115 @@ async function startResumeAnalysis() {
     }
 
     const apiKey = localStorage.getItem("geminiApiKey");
-    const spinner = document.querySelector(".loading-spinner");
+    const spinner = document.querySelector("#resume-content .loading-spinner");
+    const outputDiv = document.getElementById("resume-output");
+    
+    // Clear previous output and show loader
+    outputDiv.innerHTML = '';
     spinner.style.display = "block";
 
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Analyze this resume and generate interview preparation items:
-                                ${resumeText}
+    // Maximum number of retries
+    const maxRetries = 3;
+    let attempt = 0;
 
-                                Requirements:
-                                1. For each item provide:
-                                    - Question type (Technical/Behavioral/Scenario)
-                                    - Specific question
-                                    - Concise answer (2-3 sentences)
-                                    - 3-4 key bullet points
-                                2. Format response as valid JSON:
-                                {
-                                    "items": [
-                                        {
-                                            "type": "question type",
-                                            "question": "text",
-                                            "answer": "2-3 sentence answer",
-                                            "keyPoints": ["point1", "point2"]
-                                        }
-                                    ]
-                                }
-                                3. Focus on technical implementations and measurable outcomes
-                                4. Include specific tools/technologies mentioned in resume`
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Analyze this resume and generate interview preparation items:
+                                    ${resumeText}
+
+                                    Requirements:
+                                    1. For each item provide:
+                                        - Question type (Technical/Behavioral/Scenario)
+                                        - Specific question
+                                        - Concise answer (2-3 sentences)
+                                        - 3-4 key bullet points
+                                    2. Format response as valid JSON:
+                                    {
+                                        "items": [
+                                            {
+                                                "type": "question type",
+                                                "question": "text",
+                                                "answer": "2-3 sentence answer",
+                                                "keyPoints": ["point1", "point2"]
+                                            }
+                                        ]
+                                    }
+                                    3. Focus on technical implementations and measurable outcomes
+                                    4. Include specific tools/technologies mentioned in resume`
+                            }]
                         }]
-                    }]
-                })
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                // If it's a 503 error, retry after a delay
+                if (response.status === 503) {
+                    attempt++;
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                        continue;
+                    }
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        );
 
-        const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
-        const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
-        const interviewData = JSON.parse(cleanJSON);
-        
-        displayInterviewItems(interviewData.items);
-        document.getElementById("interview-container").classList.remove("hidden");
+            const data = await response.json();
+            
+            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response structure from API');
+            }
 
-    } catch (error) {
-        console.error("Error generating Q&A:", error);
-        alert("Error generating questions. Please try again.");
-    } finally {
-        spinner.style.display = "none";
+            const textResponse = data.candidates[0].content.parts[0].text;
+            if (!textResponse) {
+                throw new Error('Empty response from API');
+            }
+
+            const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '');
+            
+            try {
+                const interviewData = JSON.parse(cleanJSON);
+                if (!interviewData || !interviewData.items || !Array.isArray(interviewData.items)) {
+                    throw new Error('Invalid JSON structure');
+                }
+                
+                displayInterviewItems(interviewData.items);
+                document.getElementById("interview-container").classList.remove("hidden");
+                break; // Success! Exit the retry loop
+            } catch (jsonError) {
+                throw new Error(`Failed to parse response: ${jsonError.message}`);
+            }
+
+        } catch (error) {
+            attempt++;
+            if (attempt === maxRetries || error.message !== 'HTTP error! status: 503') {
+                console.error("Error generating Q&A:", error);
+                outputDiv.innerHTML = `
+                    <div class="error-message">
+                        ${attempt === maxRetries ? 
+                            'Service is temporarily unavailable. Please try again in a few moments.' : 
+                            'Error analyzing resume. Please try again.'}
+                        <br>
+                        <small style="display: block; margin-top: 0.5rem; color: #666;">
+                            Error details: ${error.message}
+                        </small>
+                    </div>`;
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
     }
+
+    // Hide loader when done
+    spinner.style.display = "none";
 }
 
 // Updated display function
@@ -746,101 +865,132 @@ function downloadInterviewPrep() {
   }
 }
 
-// Add this to the existing script.js file
-
 // Email Response Generator Function
 async function generateEmailResponse() {
-  const spinner = document.querySelector(".loading-spinner");
-  const apiKey = localStorage.getItem("geminiApiKey");
-  const outputDiv = document.getElementById("email-response-output");
-  const originalEmailInput = document.getElementById("original-email-input");
-  const responseTypeSelect = document.getElementById("response-type");
-  const toneSelect = document.getElementById("response-tone");
+    const spinner = document.querySelector("#email-content .loading-spinner");
+    const apiKey = localStorage.getItem("geminiApiKey");
+    const outputDiv = document.getElementById("email-response-output");
+    const originalEmailInput = document.getElementById("original-email-input");
+    const responseTypeSelect = document.getElementById("response-type");
+    const toneSelect = document.getElementById("response-tone");
 
-  // Clear previous output and hide download buttons
-  outputDiv.innerHTML = '';
-  document.getElementById("email-download-buttons").style.display = "none";
-  spinner.style.display = "block";
+    // Clear previous output and hide download buttons
+    outputDiv.innerHTML = '';
+    document.getElementById("email-download-buttons").style.display = "none";
+    spinner.style.display = "block";
 
-  // Validate input
-  const originalEmail = originalEmailInput.value.trim();
-  if (!originalEmail) {
-      outputDiv.innerHTML = "Please paste the original email.";
-      spinner.style.display = "none";
-      return;
-  }
+    // Validate input
+    const originalEmail = originalEmailInput.value.trim();
+    if (!originalEmail) {
+        outputDiv.innerHTML = "Please paste the original email.";
+        spinner.style.display = "none";
+        return;
+    }
 
-  // Prepare request body
-  const requestBody = {
-      contents: [
-          {
-              parts: [
-                  {
-                      text: `Generate an email response with the following requirements:
-                          Original Email: ${originalEmail}
-                          Response Type: ${responseTypeSelect.value}
-                          Tone: ${toneSelect.value}
+    // Maximum number of retries
+    const maxRetries = 3;
+    let attempt = 0;
 
-                          Guidelines:
-                          1. Craft a professional and appropriate response
-                          2. Directly address the key points in the original email
-                          3. Match the response type and tone specified
-                          4. Keep the length concise and clear
-                          5. Use proper email formatting with salutation and signature
-                          
-                          Response Types:
-                          - Informative: Provide detailed information
-                          - Acknowledgment: Confirm receipt and next steps
-                          - Scheduling: Arrange meeting/call
-                          - Follow-up: Provide additional details
-                          - Courtesy: Polite and brief response
+    while (attempt < maxRetries) {
+        try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Generate an email response with the following requirements:
+                                    Original Email: ${originalEmail}
+                                    Response Type: ${responseTypeSelect.value}
+                                    Tone: ${toneSelect.value}
 
-                          Tone Options:
-                          - Professional: Formal, corporate language
-                          - Friendly: Warm, approachable
-                          - Neutral: Balanced, straightforward
-                          - Urgent: Emphasize importance
-                          
-                          Do not include any placeholders or extra text. Generate a complete, ready-to-send email response.`
-                  }
-              ]
-          }
-      ]
-  };
+                                    Guidelines:
+                                    1. Craft a professional and appropriate response
+                                    2. Directly address the key points in the original email
+                                    3. Match the response type and tone specified
+                                    4. Keep the length concise and clear
+                                    5. Use proper email formatting with salutation and signature
+                                    
+                                    Response Types:
+                                    - Informative: Provide detailed information
+                                    - Acknowledgment: Confirm receipt and next steps
+                                    - Scheduling: Arrange meeting/call
+                                    - Follow-up: Provide additional details
+                                    - Courtesy: Polite and brief response
 
-  try {
-      const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(requestBody),
-          }
-      );
+                                    Tone Options:
+                                    - Professional: Formal, corporate language
+                                    - Friendly: Warm, approachable
+                                    - Neutral: Balanced, straightforward
+                                    - Urgent: Emphasize importance
+                                    
+                                    Do not include any placeholders or extra text. Generate a complete, ready-to-send email response.`
+                            }]
+                        }]
+                    })
+                }
+            );
 
-      const data = await response.json();
-      const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate response";
+            if (!response.ok) {
+                // If it's a 503 error, retry after a delay
+                if (response.status === 503) {
+                    attempt++;
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+                        continue;
+                    }
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-      // Add some basic formatting to the email
-      outputDiv.innerHTML = `
-          <div class="email-response">
-              <div class="email-header">Email Response</div>
-              <pre class="email-content">${outputText}</pre>
-          </div>
-      `;
+            const data = await response.json();
+            
+            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Invalid response structure from API');
+            }
 
-      // Update history
-      historyStack.push(outputText);
-      if (historyStack.length > MAX_HISTORY) historyStack.shift();
+            const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate response";
 
-      // Show download buttons
-      document.getElementById("email-download-buttons").style.display = "flex";
-  } catch (error) {
-      console.error("Error generating email response:", error);
-      outputDiv.innerHTML = `Error: ${error.message}. Please check your internet connection and API key.`;
-  } finally {
-      spinner.style.display = "none";
-  }
+            // Add some basic formatting to the email
+            outputDiv.innerHTML = `
+                <div class="email-response">
+                    <div class="email-header">Email Response</div>
+                    <pre class="email-content">${outputText}</pre>
+                </div>
+            `;
+
+            // Update history
+            historyStack.push(outputText);
+            if (historyStack.length > MAX_HISTORY) historyStack.shift();
+
+            // Show download buttons
+            document.getElementById("email-download-buttons").style.display = "flex";
+            break; // Success! Exit the retry loop
+
+        } catch (error) {
+            attempt++;
+            if (attempt === maxRetries || error.message !== 'HTTP error! status: 503') {
+                console.error("Error generating email response:", error);
+                outputDiv.innerHTML = `
+                    <div class="error-message">
+                        ${attempt === maxRetries ? 
+                            'Service is temporarily unavailable. Please try again in a few moments.' : 
+                            'Error generating email response. Please try again.'}
+                        <br>
+                        <small style="display: block; margin-top: 0.5rem; color: #666;">
+                            Error details: ${error.message}
+                        </small>
+                    </div>`;
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+    }
+
+    // Hide spinner when done
+    spinner.style.display = "none";
 }
 
 // Download Email Response as PDF
@@ -863,4 +1013,422 @@ function downloadEmailDOCX() {
       ],
   });
   docx.Packer.toBlob(doc).then((blob) => saveAs(blob, "email-response.docx"));
+}
+
+// Dark/Light Mode Functionality
+function toggleTheme() {
+  const htmlElement = document.documentElement;
+  const isDarkMode = htmlElement.classList.toggle('dark-mode');
+  localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  updateThemeToggleIcon(isDarkMode);
+}
+
+function updateThemeToggleIcon(isDarkMode) {
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.innerHTML = isDarkMode 
+      ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+}
+
+// Update the initTheme function
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const htmlElement = document.documentElement;
+    
+    if (savedTheme === 'dark') {
+        htmlElement.classList.add('dark-mode');
+    } else {
+        htmlElement.classList.remove('dark-mode');
+    }
+
+    // Ensure the toggle button exists and update its icon
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        updateThemeToggleIcon(savedTheme === 'dark');
+    }
+}
+
+function openResumeDialog() {
+    const dialog = document.getElementById('resume-dialog');
+    const storedResume = localStorage.getItem('userResume');
+    const resumeTextarea = document.getElementById('stored-resume');
+    
+    if (storedResume) {
+        resumeTextarea.value = storedResume;
+    }
+    
+    dialog.style.display = 'block';
+}
+
+function closeResumeDialog() {
+    document.getElementById('resume-dialog').style.display = 'none';
+}
+
+function saveResume() {
+    const resumeText = document.getElementById('stored-resume').value.trim();
+    if (resumeText) {
+        localStorage.setItem('userResume', resumeText);
+        closeResumeDialog();
+        updateResumeButton();
+        
+        // Update the current input fields to show checkbox
+        updateInputFields();
+        
+        // Auto-fill resume analysis textarea if on the resume tab
+        const resumeContent = document.getElementById('resume-content');
+        const resumeAnalysisTextarea = document.getElementById('resume-text');
+        if (resumeContent.style.display === 'block' && resumeAnalysisTextarea) {
+            resumeAnalysisTextarea.value = resumeText;
+        }
+        
+        // Show success message
+        const message = document.createElement('div');
+        message.className = 'success-message';
+        message.textContent = 'Resume saved successfully!';
+        document.body.appendChild(message);
+        setTimeout(() => message.remove(), 3000);
+    } else {
+        alert('Please enter your resume text.');
+    }
+}
+
+// Add these functions
+function updateResumeButton() {
+    const resumeButton = document.querySelector('.resume-button');
+    const hasResume = localStorage.getItem('userResume');
+    
+    if (hasResume) {
+        resumeButton.textContent = 'Clear Resume';
+        resumeButton.onclick = openConfirmDialog;
+    } else {
+        resumeButton.textContent = 'Add Resume';
+        resumeButton.onclick = openResumeDialog;
+    }
+}
+
+function openConfirmDialog() {
+    document.getElementById('confirm-dialog').style.display = 'block';
+}
+
+function closeConfirmDialog() {
+    document.getElementById('confirm-dialog').style.display = 'none';
+}
+
+function confirmClearResume() {
+    localStorage.removeItem('userResume');
+    closeConfirmDialog();
+    updateResumeButton();
+    
+    // Update input fields to remove checkbox
+    updateInputFields();
+    
+    // Clear the resume analysis textarea if it exists
+    const resumeAnalysisTextarea = document.getElementById('resume-text');
+    if (resumeAnalysisTextarea) {
+        resumeAnalysisTextarea.value = '';
+    }
+    
+    // Show success message
+    const message = document.createElement('div');
+    message.className = 'success-message';
+    message.textContent = 'Resume cleared successfully!';
+    document.body.appendChild(message);
+    setTimeout(() => message.remove(), 3000);
+}
+
+// Aptitude Test Variables
+let currentTest = {
+  categories: [],
+  questions: [],
+  currentQuestionIndex: 0,
+  timeLeft: 0,
+  timerInterval: null,
+  score: 0
+};
+
+// Fetch Questions from Generative AI
+async function generateQuestions() {
+  const apiKey = localStorage.getItem("geminiApiKey");
+  const spinner = document.querySelector(".loading-spinner");
+  const categoriesSelected = currentTest.categories.join(", ");
+
+  spinner.style.display = "block";
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Generate a set of 10 multiple-choice questions for an aptitude test covering the following categories: ${categoriesSelected}
+
+              Requirements:
+              1. Each question must have:
+                 - A clear, concise question statement
+                 - 4 answer options
+                 - A correct answer
+                 - A detailed explanation
+              2. Format the response as valid JSON:
+              {
+                "questions": [
+                  {
+                    "category": "category_name",
+                    "question": "Question text",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct": 0,  // Index of correct answer
+                    "explanation": "Detailed explanation of the correct answer"
+                  }
+                ]
+              }
+              3. Ensure questions match the selected categories
+              4. Mix difficulty levels
+              5. Provide varied question types within each category`
+            }]
+          }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const textResponse = data.candidates[0].content.parts[0].text;
+    
+    // Clean and parse JSON
+    const cleanJSON = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanJSON);
+
+    // Validate and set questions
+    if (parsedData.questions && parsedData.questions.length > 0) {
+      currentTest.questions = parsedData.questions;
+      initializeTest();
+    } else {
+      throw new Error("No questions generated");
+    }
+  } catch (error) {
+    console.error("Error generating questions:", error);
+    alert("Failed to generate questions. Please try again.");
+  } finally {
+    spinner.style.display = "none";
+  }
+}
+
+function toggleCategory(category) {
+  const card = document.querySelector(`[onclick="toggleCategory('${category}')"]`);
+  card.classList.toggle('selected');
+  const index = currentTest.categories.indexOf(category);
+  
+  if (index === -1) {
+    currentTest.categories.push(category);
+  } else {
+    currentTest.categories.splice(index, 1);
+  }
+}
+
+function startTest() {
+  if (currentTest.categories.length === 0) {
+    alert("Please select at least one category");
+    return;
+  }
+
+  // Generate questions via AI
+  generateQuestions();
+}
+
+function initializeTest() {
+  // Set up test
+  currentTest.currentQuestionIndex = 0;
+  currentTest.score = 0;
+  currentTest.timeLeft = currentTest.questions.length * 60; // 1 minute per question
+  
+  document.querySelector('.aptitude-controls').style.display = 'none';
+  document.querySelector('.test-container').style.display = 'block';
+  
+  startTimer();
+  showQuestion();
+}
+
+function startTimer() {
+  currentTest.timerInterval = setInterval(() => {
+    currentTest.timeLeft--;
+    const timerDisplay = document.querySelector('.timer');
+    
+    if (timerDisplay) {
+      timerDisplay.textContent = 
+        `Time Left: ${Math.floor(currentTest.timeLeft/60)}:${(currentTest.timeLeft%60).toString().padStart(2, '0')}`;
+    }
+    
+    if (currentTest.timeLeft <= 0) {
+      clearInterval(currentTest.timerInterval);
+      submitTest();
+    }
+  }, 1000);
+}
+
+function showQuestion() {
+  const question = currentTest.questions[currentTest.currentQuestionIndex];
+  
+  const optionsHtml = question.options.map((option, index) => `
+    <label class="option-label">
+      <input type="radio" name="answer" value="${index}">
+      ${option}
+    </label>
+  `).join('');
+
+  const questionCounter = document.querySelector('.question-counter');
+  const testQuestion = document.querySelector('.test-question');
+  const testOptions = document.querySelector('.test-options');
+  const nextButton = document.querySelector('.next-button');
+  const submitButton = document.querySelector('.submit-button');
+
+  // Reset radio button selection
+  const radioButtons = document.querySelectorAll('input[type="radio"]');
+  radioButtons.forEach(radio => radio.checked = false);
+
+  if (questionCounter) {
+    questionCounter.textContent = 
+      `Question ${currentTest.currentQuestionIndex + 1} of ${currentTest.questions.length}`;
+  }
+
+  if (testQuestion) {
+    testQuestion.innerHTML = `
+      <span class="category-tag">${question.category}</span>
+      ${question.question}
+    `;
+  }
+
+  if (testOptions) {
+    testOptions.innerHTML = optionsHtml;
+  }
+
+  // Hide buttons initially
+  if (nextButton) {
+    nextButton.classList.add('hidden');
+  }
+
+  if (submitButton) {
+    submitButton.classList.add('hidden');
+  }
+}
+
+function nextQuestion() {
+  currentTest.currentQuestionIndex++;
+  
+  if (currentTest.currentQuestionIndex < currentTest.questions.length) {
+    showQuestion();
+  } else {
+    submitTest();
+  }
+}
+
+function submitTest() {
+  clearInterval(currentTest.timerInterval);
+  
+  const testContainer = document.querySelector('.test-container');
+  const resultsContainer = document.querySelector('.results-container');
+  const scoreElement = document.getElementById('score');
+  const totalElement = document.getElementById('total');
+  const reviewQuestions = document.querySelector('.review-questions');
+
+  if (testContainer) {
+    testContainer.style.display = 'none';
+  }
+  
+  // Calculate score
+  currentTest.questions.forEach((question, index) => {
+    if (question.selected === question.correct) {
+      currentTest.score++;
+    }
+  });
+
+  // Show results
+  if (resultsContainer) {
+    resultsContainer.classList.remove('hidden');
+  }
+
+  if (scoreElement) {
+    scoreElement.textContent = currentTest.score;
+  }
+
+  if (totalElement) {
+    totalElement.textContent = currentTest.questions.length;
+  }
+
+  // Show review
+  if (reviewQuestions) {
+    const reviewHtml = currentTest.questions.map((question, index) => `
+      <div class="review-question">
+        <p class="category-tag">${question.category}</p>
+        <p>${index + 1}. ${question.question}</p>
+        <p class="correct-answer">
+          Correct Answer: ${question.options[question.correct]}
+        </p>
+        <p class="explanation">Explanation: ${question.explanation}</p>
+      </div>
+    `).join('');
+    
+    reviewQuestions.innerHTML = reviewHtml;
+  }
+}
+
+// Handle answer selection
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.option-label')) {
+    const selectedOption = e.target.closest('.option-label');
+    const questionIndex = currentTest.currentQuestionIndex;
+    const selectedAnswer = parseInt(selectedOption.querySelector('input').value);
+    
+    currentTest.questions[questionIndex].selected = selectedAnswer;
+    
+    // Show next or submit button based on current question
+    const nextButton = document.querySelector('.next-button');
+    const submitButton = document.querySelector('.submit-button');
+
+    // Hide both buttons first
+    if (nextButton) nextButton.classList.add('hidden');
+    if (submitButton) submitButton.classList.add('hidden');
+
+    // Show appropriate button based on question index
+    if (currentTest.currentQuestionIndex === currentTest.questions.length - 1) {
+      if (submitButton) {
+        submitButton.classList.remove('hidden');
+      }
+    } else {
+      if (nextButton) {
+        nextButton.classList.remove('hidden');
+      }
+    }
+  }
+});
+
+// Restart Test
+function restartTest() {
+  // Reset test state
+  currentTest = {
+    categories: [],
+    questions: [],
+    currentQuestionIndex: 0,
+    timeLeft: 0,
+    timerInterval: null,
+    score: 0
+  };
+
+  // Hide results
+  const resultsContainer = document.querySelector('.results-container');
+  if (resultsContainer) {
+    resultsContainer.classList.add('hidden');
+  }
+
+  // Show category selection
+  const aptitudeControls = document.querySelector('.aptitude-controls');
+  if (aptitudeControls) {
+    aptitudeControls.style.display = 'block';
+  }
+
+  // Deselect all category cards
+  const categoryCards = document.querySelectorAll('.category-card');
+  categoryCards.forEach(card => {
+    card.classList.remove('selected');
+  });
 }
