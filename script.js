@@ -64,6 +64,7 @@ function showTab(tab) {
   } else if (tab === "resume") {
     tabContent.style.display = "block";
     resumeContent.style.display = "block";
+<<<<<<< HEAD
     
     // Auto-fill resume text if available
     const storedResume = localStorage.getItem('userResume');

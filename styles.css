@@ -1230,4 +1230,208 @@ textarea {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+<<<<<<< HEAD
+=======
+}
+
+/* Aptitude Test Styles */
+.aptitude-controls {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    margin: 2rem auto;
+    max-width: 800px;
+}
+
+.test-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.category-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.category-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.test-container {
+    display: none;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 16px;
+    margin: 2rem auto;
+    max-width: 800px;
+}
+
+.question-counter {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.timer {
+    font-size: 1.25rem;
+    color: var(--secondary-color);
+    margin-bottom: 1.5rem;
+}
+
+.test-question {
+    margin-bottom: 2rem;
+}
+
+.option-label {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-label:hover {
+    border-color: var(--primary-color);
+}
+
+.option-label.correct {
+    background: #dcfce7;
+    border-color: #22c55e;
+}
+
+.option-label.wrong {
+    background: #fee2e2;
+    border-color: #ef4444;
+}
+
+.results-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+  
+.results-container h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+  
+  .results-container p#score-summary {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #555;
+  }
+  
+  .review-questions {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .review-question {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .review-question:last-child {
+    border-bottom: none;
+  }
+  
+  
+  .review-question p {
+    margin: 5px 0;
+    line-height: 1.6;
+  }
+  
+  .correct-answer {
+    color: #2c4c7c;
+    font-weight: bold;
+  }
+  
+  .explanation {
+    color: #7f8c8d;
+    font-style: italic;
+  }
+
+  .button2 {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    cursor: pointer;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+  
+  .button2:hover {
+    background-color: #2c4c7c;
+  }
+
+  /* Add these styles to your existing dark mode section */
+.dark-mode .results-container {
+    background-color: var(--dark-card-bg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .results-container h3 {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .results-container p#score-summary {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .review-questions {
+    background-color: var(--dark-card-bg);
+    border: 1px solid var(--dark-border-color);
+}
+
+.dark-mode .review-question {
+    border-bottom-color: var(--dark-border-color);
+}
+
+.dark-mode .review-question h4 {
+    color: var(--dark-primary-color);
+}
+
+.dark-mode .question-text {
+    color: var(--dark-text-color);
+}
+
+.dark-mode .correct-answer {
+    color: #7c7fff;
+}
+
+.dark-mode .explanation {
+    color: #94a3b8;
+}
+
+.dark-mode .button2 {
+    background-color: var(--dark-primary-color);
+    color: var(--dark-text-color);
+}
+
+.dark-mode .button2:hover {
+    background-color: var(--dark-secondary-color);
+>>>>>>> c0708369ad6c5c267b06347ee90a2e0ae0c7f65e
 }
