@@ -1208,7 +1208,7 @@ function toggleCategory(category) {
     }
 }
 
-// Update the startTest function to include topic distribution
+// Update the startTest function to clear previous content
 async function startTest() {
     if (selectedCategories.size === 0) {
         alert('Please select at least one category');
@@ -1230,6 +1230,22 @@ async function startTest() {
     const spinner = document.querySelector("#aptitude-content .loading-spinner");
     
     try {
+        // Clear previous test content
+        const questionCounter = document.querySelector('.question-counter');
+        const testQuestion = document.querySelector('.test-question');
+        const testOptions = document.querySelector('.test-options');
+        const nextButton = document.querySelector('.next-button');
+        const submitButton = document.querySelector('.submit-button');
+        const timerDisplay = document.querySelector('.timer');
+
+        // Clear all previous content
+        if (questionCounter) questionCounter.innerHTML = '';
+        if (testQuestion) testQuestion.innerHTML = '';
+        if (testOptions) testOptions.innerHTML = '';
+        if (nextButton) nextButton.classList.add('hidden');
+        if (submitButton) submitButton.classList.add('hidden');
+        if (timerDisplay) timerDisplay.innerHTML = '';
+
         document.querySelector('.aptitude-controls').style.display = 'none';
         document.querySelector('.test-container').style.display = 'block';
         spinner.style.display = "block";
@@ -1386,6 +1402,12 @@ function nextQuestion() {
 }
 
 function submitTest() {
+    // First capture the last answer if selected
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    if (selectedAnswer) {
+        userResponses[currentTest.currentQuestionIndex] = parseInt(selectedAnswer.value);
+    }
+
     clearInterval(currentTest.timer);
     
     // Calculate score
@@ -1410,12 +1432,12 @@ function submitTest() {
             </div>
             <div class="legend-item">
                 <span class="legend-color incorrect"></span>
-                <span>Your Answer</span>
+                <span>Your Answer (if incorrect)</span>
             </div>
         </div>
     `;
 
-    // Show review of questions
+    // Show review of questions with improved answer highlighting
     const reviewHtml = currentTest.questions.map((q, index) => `
         <div class="review-question">
             <div class="question-header">
@@ -1427,11 +1449,17 @@ function submitTest() {
             </div>
             <div class="question-text">${q.question}</div>
             <div class="review-options">
-                ${q.options.map((option, i) => `
-                    <div class="review-option ${i === userResponses[index] ? 'selected' : ''} ${i === q.correct ? 'correct' : ''}">
-                        ${option}
-                    </div>
-                `).join('')}
+                ${q.options.map((option, i) => {
+                    const isUserAnswer = i === userResponses[index];
+                    const isCorrectAnswer = i === q.correct;
+                    return `
+                        <div class="review-option ${isUserAnswer ? 'selected' : ''} ${isCorrectAnswer ? 'correct' : ''}">
+                            ${option}
+                            ${isUserAnswer && !isCorrectAnswer ? '<span class="incorrect-marker">✗</span>' : ''}
+                            ${isCorrectAnswer ? '<span class="correct-marker">✓</span>' : ''}
+                        </div>
+                    `;
+                }).join('')}
             </div>
             <div class="explanation">
                 <strong>Explanation:</strong> ${q.explanation}

@@ -1656,51 +1656,49 @@ textarea {
 }
 
 .review-option {
-    padding: 1rem;
+    position: relative;
+    padding: 1rem 2.5rem 1rem 3rem;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    position: relative;
-    padding-left: 3rem;
+    margin: 0.5rem 0;
+    transition: all 0.2s ease;
 }
 
-.review-option::before {
-    content: '';
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-}
-
-/* Style for the selected (user's) answer */
-.review-option.selected {
+.review-option.selected:not(.correct) {
     background: rgba(239, 68, 68, 0.1);
     border-color: #ef4444;
 }
 
-.review-option.selected::before {
-    background: #ef4444;
-    border-color: #ef4444;
-}
-
-/* Style for the correct answer */
 .review-option.correct {
     background: rgba(34, 197, 94, 0.1);
     border-color: #22c55e;
 }
 
-.review-option.correct::before {
-    background: #22c55e;
-    border-color: #22c55e;
+.correct-marker,
+.incorrect-marker {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
-/* When the selected answer is also correct */
-.review-option.selected.correct {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: #22c55e;
+.correct-marker {
+    color: #22c55e;
+}
+
+.incorrect-marker {
+    color: #ef4444;
+}
+
+/* Dark mode adjustments */
+.dark-mode .review-option.selected:not(.correct) {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.dark-mode .review-option.correct {
+    background: rgba(34, 197, 94, 0.15);
 }
 
 /* Add legend for the review */
