@@ -80,7 +80,7 @@ function saveApiKey() {
   const apiKeyButton = document.querySelector(".api-key-button");
   const resumeButton = document.querySelector(".resume-button");
 
-  if (apiKey) {
+    if (apiKey) {
     localStorage.setItem("geminiApiKey", apiKey);
     message.style.display = "none";
     document.getElementById("application-tabs").style.display = "block";
@@ -88,10 +88,10 @@ function saveApiKey() {
     resumeButton.style.display = "block";
     closeDialog();
     showTab("letter");
-  } else {
+    } else {
     message.style.display = "block";
     alert("Please enter a valid API Key.");
-  }
+    }
 }
 
 function showTab(tab) {
@@ -143,9 +143,9 @@ function showTab(tab) {
 function enableEditing(elementId = 'letter-output') {
     const outputDiv = document.getElementById(elementId);
     if (outputDiv) {
-        outputDiv.contentEditable = true;
+    outputDiv.contentEditable = true;
         outputDiv.style.border = '2px solid var(--primary-color)';
-        outputDiv.focus();
+    outputDiv.focus();
         outputDiv.style.backgroundColor = '#fafafa';
         outputDiv.style.padding = '2rem';
         
@@ -190,20 +190,23 @@ function showHistory() {
                 <div class="history-list">
                     ${historyStack.map((item, i) => {
                         // Extract first line as title
-                        const firstLine = item.split('\n')[0];
+                        const firstLine = item.content.split('\n')[0];
                         // Get letter type from content
-                        const letterType = item.includes('Letter of Recommendation') ? 'LOR' :
-                                         item.includes('Statement of Purpose') ? 'SOP' :
-                                         item.includes('Cover Letter') ? 'Cover Letter' :
-                                         item.includes('General Letter to') ? 'General Letter' : // Add this line
-                                        'Job Application';
+                        const letterType = item.content.includes('Letter of Recommendation') ? 'LOR' :
+                                         item.content.includes('Statement of Purpose') ? 'SOP' :
+                                         item.content.includes('Cover Letter') ? 'Cover Letter' :
+                                         item.content.includes('General Letter to') ? 'General Letter' :
+                                         'Job Application';
+                        
+                        // Format the timestamp
+                        const timestamp = new Date(item.timestamp).toLocaleString();
                         
                         return `
-                            <div class="history-item">
+                    <div class="history-item">
                                 <div class="history-item-header">
                                     <span class="history-type">${letterType}</span>
-                                    <span class="history-number">#${historyStack.length - i}</span>
-                                </div>
+                                    <span class="history-timestamp">${timestamp}</span>
+                    </div>
                                 <div class="history-preview">${firstLine}</div>
                                 <button onclick="loadHistory(${i})" class="history-load-btn">Load</button>
                             </div>
@@ -217,40 +220,180 @@ function showHistory() {
 }
 
 function loadHistory(index) {
-  const activeTab = document.querySelector(
-    '[id$="-content"]:not([style*="none"])'
-  ).id;
-  const outputDiv = activeTab.includes("job")
-    ? document.getElementById("application-output")
-    : document.getElementById("lor-output");
+    const activeTab = document.querySelector('[id$="-content"]:not([style*="none"])')?.id;
+    if (!activeTab) return;
 
-  outputDiv.innerHTML = historyStack[index];
-  document.querySelector(".dialog").remove();
+    const outputDiv = activeTab.includes("job") ?
+        document.getElementById("application-output") :
+        document.getElementById("lor-output");
+
+    if (outputDiv && historyStack[index]) {
+        outputDiv.innerHTML = historyStack[index].content;
+        document.querySelector(".dialog")?.remove();
+    }
 }
 
 // Job Application Functions
 async function generateLetter() {
     const spinner = document.querySelector(".loading-spinner");
-    const letterType = document.getElementById("template-style").value;
-    const apiKey = localStorage.getItem("geminiApiKey");
+    const letterTypeSelect = document.getElementById("template-style");
     const outputDiv = document.getElementById("letter-output");
-  
+    
+    // Validate required elements exist
+    if (!letterTypeSelect || !outputDiv || !spinner) {
+        console.error("Required elements not found");
+        return;
+    }
+
+    const letterType = letterTypeSelect.value;
+    const apiKey = localStorage.getItem("geminiApiKey");
+    
+    if (!apiKey) {
+        outputDiv.innerHTML = "Please add your API key first.";
+        return;
+    }
+    
     document.getElementById("download-buttons").style.display = "none";
     spinner.style.display = "block";
   
-    // Handle all letter types consistently
-    const context = document.getElementById("context-input").value.trim();
-    const keyPoints = document.getElementById("key-points-input").value.trim();
-    const senderInfo = document.getElementById("sender-info").value.trim();
-    const recipientInfo = document.getElementById("recipient-info").value.trim();
-  
-    if (!context || !keyPoints || !senderInfo || !recipientInfo) {
-      outputDiv.innerHTML = "Please fill in all required fields.";
-      spinner.style.display = "none";
-      return;
+    // Handle LOR fields if needed
+    if (letterType === "lor") {
+        const studentNameInput = document.getElementById("student-name");
+        const recommenderNameInput = document.getElementById("recommender-name");
+        const relationshipInput = document.getElementById("relationship");
+        const coursesInput = document.getElementById("courses");
+        const achievementsInput = document.getElementById("achievements");
+        const purposeInput = document.getElementById("purpose");
+        const lorTypeInput = document.getElementById("lor-type");
+        
+        // Validate LOR-specific inputs exist
+        if (!studentNameInput || !recommenderNameInput || !relationshipInput || 
+            !coursesInput || !achievementsInput || !purposeInput || !lorTypeInput) {
+            outputDiv.innerHTML = "Error: LOR form elements not found. Please refresh the page.";
+            spinner.style.display = "none";
+            return;
+        }
+
+        const studentName = studentNameInput.value.trim();
+        const recommenderName = recommenderNameInput.value.trim();
+        const relationship = relationshipInput.value.trim();
+        const courses = coursesInput.value.trim();
+        const achievements = achievementsInput.value.trim();
+        const purpose = purposeInput.value.trim();
+        const lorType = lorTypeInput.value;
+    
+        if (!studentName || !recommenderName || !relationship) {
+            outputDiv.innerHTML = "Please fill in all required fields.";
+            spinner.style.display = "none";
+            return;
+        }
+
+        const useResumeCheckbox = document.getElementById('use-resume');
+        const useResume = useResumeCheckbox ? useResumeCheckbox.checked : false;
+        const storedResume = useResume ? localStorage.getItem('userResume') : '';
+    
+        const requestData = {
+            senderInfo: recommenderName,
+            recipientInfo: studentName,
+            context: `${relationship} - ${courses}`,
+            keyPoints: useResume ? `${achievements}\n\nResume:\n${storedResume}` : achievements,
+            purpose: purpose,
+            type: lorType,
+    };
+
+    try {
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Generate a Letter of Recommendation with the following details:
+                                    From: ${requestData.senderInfo} (Recommender)
+                                    For: ${requestData.recipientInfo} (Candidate)
+                                    Context: ${requestData.context}
+                                    Key Achievements/Skills: ${requestData.keyPoints}
+                                    Purpose: ${requestData.purpose}
+                                    Type: ${requestData.type}
+                                    
+                                    Format requirements:
+                                    - Professional letterhead with recommender's title and institution
+                                    - Opening that establishes relationship with candidate and duration/context
+                                    - Explanation of recommender's qualifications to evaluate the candidate
+                                    - 2-3 specific examples that demonstrate candidate's exceptional qualities
+                                    - Include detailed anecdotes with measurable outcomes/impact
+                                    - Compare candidate to peers using specific percentiles or rankings when possible
+                                    - Address relevant skills for the position/program the candidate is pursuing
+                                    - Include both strengths and areas of growth (framed positively)
+                                    - Strong concluding endorsement with level of enthusiasm clearly stated
+                                    - Professional closing with contact information offer
+                                    - 500-750 words in length
+                                    - Formal academic/professional tone throughout`
+                            }]
+                        }]
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('No response generated from API');
+            }
+
+            const outputText = data.candidates[0]?.content?.parts?.[0]?.text || "Failed to generate";
+            const letterHeading = `Letter of Recommendation for ${requestData.recipientInfo} - ${requestData.type}`;
+            
+            outputDiv.innerHTML = `<h3 class="letter-heading">${letterHeading}</h3>\n\n${outputText}`;
+            historyStack.push({
+                content: `${letterHeading}\n\n${outputText}`,
+                timestamp: new Date().toISOString(),
+                type: letterType
+            });
+            if (historyStack.length > MAX_HISTORY) historyStack.shift();
+            document.getElementById("download-buttons").style.display = "flex";
+            
+        } catch (error) {
+            console.error("Error generating LOR:", error);
+            outputDiv.innerHTML = `Error: ${error.message}. Please check your internet connection and API key.`;
+        } finally {
+            spinner.style.display = "none";
+        }
+        return;
     }
   
-    const useResume = document.getElementById('use-resume')?.checked;
+    // Handle all other letter types consistently
+    const contextInput = document.getElementById("context-input");
+    const keyPointsInput = document.getElementById("key-points-input");
+    const senderInfoInput = document.getElementById("sender-info");
+    const recipientInfoInput = document.getElementById("recipient-info");
+    
+    // Validate all required inputs exist
+    if (!contextInput || !keyPointsInput || !senderInfoInput || !recipientInfoInput) {
+        outputDiv.innerHTML = "Error: Required form elements not found. Please refresh the page.";
+        spinner.style.display = "none";
+        return;
+    }
+
+    const context = contextInput.value.trim();
+    const keyPoints = keyPointsInput.value.trim();
+    const senderInfo = senderInfoInput.value.trim();
+    const recipientInfo = recipientInfoInput.value.trim();
+  
+    if (!context || !keyPoints || !senderInfo || !recipientInfo) {
+        outputDiv.innerHTML = "Please fill in all required fields.";
+        spinner.style.display = "none";
+        return;
+    }
+  
+    const useResumeCheckbox = document.getElementById('use-resume');
+    const useResume = useResumeCheckbox ? useResumeCheckbox.checked : false;
     const storedResume = useResume ? localStorage.getItem('userResume') : '';
     
     let requestData = { 
@@ -260,32 +403,6 @@ async function generateLetter() {
         keyPoints: useResume ? `${keyPoints}\n\nResume:\n${storedResume}` : keyPoints,
         type: letterType === 'other' ? 'General Letter' : letterType.toUpperCase()
     };
-  
-    // Special handling for LOR fields if needed
-    if (letterType === "lor") {
-      const studentName = document.getElementById("student-name").value.trim();
-      const recommenderName = document.getElementById("recommender-name").value.trim();
-      const relationship = document.getElementById("relationship").value.trim();
-      const courses = document.getElementById("courses").value.trim();
-      const achievements = document.getElementById("achievements").value.trim();
-      const purpose = document.getElementById("purpose").value.trim();
-      const lorType = document.getElementById("lor-type").value;
-  
-      if (!studentName || !recommenderName || !relationship) {
-        outputDiv.innerHTML = "Please fill in all required fields.";
-        spinner.style.display = "none";
-        return;
-      }
-  
-      requestData = {
-        senderInfo: recommenderName,
-        recipientInfo: studentName,
-        context: `${relationship} - ${courses}`,
-        keyPoints: useResume ? `${achievements}\n\nResume:\n${storedResume}` : achievements,
-        purpose: purpose,
-        type: lorType,
-      };
-    }
   
     const promptTemplates = {
       lor: `Generate a Letter of Recommendation with the following details:
@@ -429,7 +546,7 @@ async function generateLetter() {
             body: JSON.stringify(requestBody),
           }
         );
-      
+
         const data = await response.json();
         
         // Enhanced error handling
@@ -444,15 +561,19 @@ async function generateLetter() {
       
         // Add heading to the output
         outputDiv.innerHTML = `<h3 class="letter-heading">${letterHeading}</h3>\n\n${outputText}`;
-        historyStack.push(`${letterHeading}\n\n${outputText}`);
+        historyStack.push({
+            content: `${letterHeading}\n\n${outputText}`,
+            timestamp: new Date().toISOString(),
+            type: letterType
+        });
         if (historyStack.length > MAX_HISTORY) historyStack.shift();
         document.getElementById("download-buttons").style.display = "flex";
-      } catch (error) {
+    } catch (error) {
         console.error("Error generating letter:", error);
         outputDiv.innerHTML = `Error: ${error.message}. Please check your internet connection and API key.`;
-      } finally {
+    } finally {
         spinner.style.display = "none";
-      }
+    }
 }
 
 // LOR Functions
@@ -473,18 +594,18 @@ async function generateLOR() {
   document.getElementById("lor-download-buttons").style.display = "none";
   spinner.style.display = "block";
 
-  if (!studentName || !recommenderName || !relationship) {
+    if (!studentName || !recommenderName || !relationship) {
     outputDiv.innerHTML = "Please fill required fields";
     spinner.style.display = "none";
-    return;
-  }
-
-  const requestBody = {
+        return;
+    }
+    
+    const requestBody = {
     contents: [
       {
         parts: [
           {
-            text: `Write ${lorType} LOR for ${studentName} from ${recommenderName} (${relationship}) for ${purpose}.
+                text: `Write ${lorType} LOR for ${studentName} from ${recommenderName} (${relationship}) for ${purpose}.
                 Courses: ${courses}
                 Achievements: ${achievements}
                 Include: Letterhead, relationship context, achievements, personal qualities, strong recommendation`,
@@ -492,9 +613,9 @@ async function generateLOR() {
         ],
       },
     ],
-  };
+    };
 
-  try {
+    try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
@@ -504,33 +625,71 @@ async function generateLOR() {
       }
     );
 
-    const data = await response.json();
+        const data = await response.json();
     const outputText =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "Failed to generate";
-
-    outputDiv.innerHTML = outputText;
-    historyStack.push(outputText);
-    if (historyStack.length > MAX_HISTORY) historyStack.shift();
+        
+        outputDiv.innerHTML = outputText;
+    historyStack.push({
+        content: outputText,
+        timestamp: new Date().toISOString(),
+        type: 'lor'
+    });
+        if (historyStack.length > MAX_HISTORY) historyStack.shift();
     document.getElementById("lor-download-buttons").style.display = "flex";
-  } catch (error) {
-    outputDiv.innerHTML = `Error: ${error.message}`;
-  } finally {
+    } catch (error) {
+        outputDiv.innerHTML = `Error: ${error.message}`;
+    } finally {
     spinner.style.display = "none";
-  }
+    }
 }
 
 // Download Functions
 function downloadPDF() {
-  const outputText = document.getElementById("letter-output").innerText;
-  const doc = new jspdf.jsPDF();
-  doc.setFontSize(12);
-  doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
-  doc.save("generated-letter.pdf");
+    const outputText = document.getElementById("letter-output").innerText;
+    const doc = new jspdf.jsPDF();
+    
+    // Set document properties
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+    
+    // Set margins (in mm)
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const contentWidth = pageWidth - (2 * margin);
+    
+    // Split text into lines that fit within margins
+    const lines = doc.splitTextToSize(outputText, contentWidth);
+    
+    // Calculate lines per page (accounting for margins)
+    const lineHeight = doc.getTextDimensions('test').h * 1.2;
+    const linesPerPage = Math.floor((pageHeight - (2 * margin)) / lineHeight);
+    
+    // Add pages and text
+    let currentPage = 1;
+    for (let i = 0; i < lines.length; i += linesPerPage) {
+        if (i > 0) {
+            doc.addPage();
+            currentPage++;
+        }
+        
+        // Add page number at bottom
+        doc.setFontSize(10);
+        doc.text(`Page ${currentPage}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+        doc.setFontSize(12);
+        
+        // Add content for this page
+        const pageLines = lines.slice(i, i + linesPerPage);
+        doc.text(pageLines, margin, margin + (lineHeight/2));
+    }
+    
+    doc.save("generated-letter.pdf");
 }
 
 function downloadDOCX() {
   const outputText = document.getElementById("letter-output").innerText;
-  const doc = new docx.Document({
+    const doc = new docx.Document({
     sections: [
       {
         children: [new docx.Paragraph(outputText)],
@@ -541,16 +700,50 @@ function downloadDOCX() {
 }
 
 function downloadLorPDF() {
-  const outputText = document.getElementById("lor-output").innerText;
-  const doc = new jspdf.jsPDF();
-  doc.setFontSize(12);
-  doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
-  doc.save("recommendation-letter.pdf");
+    const outputText = document.getElementById("lor-output").innerText;
+    const doc = new jspdf.jsPDF();
+    
+    // Set document properties
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+    
+    // Set margins (in mm)
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const contentWidth = pageWidth - (2 * margin);
+    
+    // Split text into lines that fit within margins
+    const lines = doc.splitTextToSize(outputText, contentWidth);
+    
+    // Calculate lines per page (accounting for margins)
+    const lineHeight = doc.getTextDimensions('test').h * 1.2;
+    const linesPerPage = Math.floor((pageHeight - (2 * margin)) / lineHeight);
+    
+    // Add pages and text
+    let currentPage = 1;
+    for (let i = 0; i < lines.length; i += linesPerPage) {
+        if (i > 0) {
+            doc.addPage();
+            currentPage++;
+        }
+        
+        // Add page number at bottom
+        doc.setFontSize(10);
+        doc.text(`Page ${currentPage}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+        doc.setFontSize(12);
+        
+        // Add content for this page
+        const pageLines = lines.slice(i, i + linesPerPage);
+        doc.text(pageLines, margin, margin + (lineHeight/2));
+    }
+    
+    doc.save("recommendation-letter.pdf");
 }
 
 function downloadLorDOCX() {
   const outputText = document.getElementById("lor-output").innerText;
-  const doc = new docx.Document({
+    const doc = new docx.Document({
     sections: [
       {
         children: [new docx.Paragraph(outputText)],
@@ -695,8 +888,8 @@ window.onload = function() {
 
 window.onclick = function (event) {
   if (event.target === document.getElementById("api-key-dialog")) {
-    closeDialog();
-  }
+        closeDialog();
+    }
 };
 
 // Change function name from startResumeAnalysis to analyzeResume
@@ -1021,7 +1214,11 @@ async function generateEmailResponse() {
             `;
 
             // Update history
-            historyStack.push(outputText);
+            historyStack.push({
+                content: outputText,
+                timestamp: new Date().toISOString(),
+                type: 'email'
+            });
             if (historyStack.length > MAX_HISTORY) historyStack.shift();
 
             // Show download buttons
@@ -1054,11 +1251,45 @@ async function generateEmailResponse() {
 
 // Download Email Response as PDF
 function downloadEmailPDF() {
-  const outputText = document.getElementById("email-response-output").innerText;
-  const doc = new jspdf.jsPDF();
-  doc.setFontSize(12);
-  doc.text(doc.splitTextToSize(outputText, 180), 10, 10);
-  doc.save("email-response.pdf");
+    const outputText = document.getElementById("email-response-output").innerText;
+    const doc = new jspdf.jsPDF();
+    
+    // Set document properties
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+    
+    // Set margins (in mm)
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const contentWidth = pageWidth - (2 * margin);
+    
+    // Split text into lines that fit within margins
+    const lines = doc.splitTextToSize(outputText, contentWidth);
+    
+    // Calculate lines per page (accounting for margins)
+    const lineHeight = doc.getTextDimensions('test').h * 1.2;
+    const linesPerPage = Math.floor((pageHeight - (2 * margin)) / lineHeight);
+    
+    // Add pages and text
+    let currentPage = 1;
+    for (let i = 0; i < lines.length; i += linesPerPage) {
+        if (i > 0) {
+            doc.addPage();
+            currentPage++;
+        }
+        
+        // Add page number at bottom
+        doc.setFontSize(10);
+        doc.text(`Page ${currentPage}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+        doc.setFontSize(12);
+        
+        // Add content for this page
+        const pageLines = lines.slice(i, i + linesPerPage);
+        doc.text(pageLines, margin, margin + (lineHeight/2));
+    }
+    
+    doc.save("email-response.pdf");
 }
 
 // Download Email Response as DOCX
