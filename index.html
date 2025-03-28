@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LOR and Cover Letter Generator</title>
+        <title>SkillSphere</title>
         <link rel="stylesheet" href="styles.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,7 +12,7 @@
     </head>
 <body>
     <nav class="navbar">
-        <h1 class="navbar-title">LOR and Cover Letter Generator</h1>
+        <h1 class="navbar-title">SkillSphere</h1>
         <div class="navbar-buttons">
             <button class="resume-button" onclick="openResumeDialog()" style="display: none;">Add Resume</button>
             <button class="api-key-button" onclick="openDialog()">Add API Key</button>
@@ -21,221 +21,233 @@
             </button>
         </div>
     </nav>
-    
-    <div id="api-key-dialog" class="dialog">
-        <div class="dialog-content">
-            <span class="close" onclick="closeDialog()">&times;</span>
-            <h2>Enter Gemini API Key</h2>
-            <input type="text" id="api-key-input" placeholder="API Key">
-            <small style="color: #666; display: block; margin-top: 5px;">
-                Note: API keys are stored locally in your browser only.
-            </small>
-            <button onclick="saveApiKey()" class="savebtn">Save</button>
+
+    <!-- Add the landing page section -->
+    <div id="landing-page" class="landing-page">
+        <h1>Welcome to SkillSphere</h1>
+        <p>Your all-in-one solution for professional document generation and aptitude testing</p>
+        <button onclick="showMainApp()" class="get-started-button">Get Started</button>
+    </div>
+
+    <!-- Wrap existing content in a main-app container -->
+    <div id="main-app" style="display: none;">
+        <div id="api-key-dialog" class="dialog">
+            <div class="dialog-content">
+                <span class="close" onclick="closeDialog()">&times;</span>
+                <h2>Enter Gemini API Key</h2>
+                <input type="text" id="api-key-input" placeholder="API Key">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Note: API keys are stored locally in your browser only.
+                </small>
+                <button onclick="saveApiKey()" class="savebtn">Save</button>
+            </div>
         </div>
-    </div>
 
-    <div id="api-key-message" class="api-key-message" style="display: block; text-align: center; margin-top: 50px;">
-        Please enter your Gemini API Key.
-        <br>
-        <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" class="button" style="margin-top: 20px;">
-            GET GEMINI API KEY
-        </button>
-    </div>
+        <div id="api-key-message" class="api-key-message" style="display: block; text-align: center; margin-top: 50px;">
+            Please enter your Gemini API Key.
+            <br>
+            <button onclick="window.open('https://aistudio.google.com/app/apikey', '_blank')" class="button" style="margin-top: 20px;">
+                GET GEMINI API KEY
+            </button>
+        </div>
 
-    <div id="application-tabs" class="application-tabs" style="display: none;">
-        <button class="tab-button" onclick="showTab('letter')">Letter Generator</button>
-        <button class="tab-button" onclick="showTab('resume')">Know Your Resume</button>
-        <button class="tab-button" onclick="showTab('email')">Email Response</button>
-        <button class="tab-button" onclick="showTab('aptitude')">Aptitude Test</button>
+        <div id="application-tabs" class="application-tabs" style="display: none;">
+            <button class="tab-button" onclick="showTab('letter')">Letter Generator</button>
+            <button class="tab-button" onclick="showTab('resume')">Know Your Resume</button>
+            <button class="tab-button" onclick="showTab('email')">Email Response</button>
+            <button class="tab-button" onclick="showTab('aptitude')">Aptitude Test</button>
 
-        <div id="tab-content">
-            <!-- Job Application Content -->
-            <div id="job-application-content" style="display: none;">
-                <!-- <h3>Letter Generator</h3> -->
-                <div class="template-selector">
-                    <label style="display: flex; align-items: center;">Letter Type: </label>
-                    <select id="template-style" onchange="updateInputFields()" style="padding: 0.5rem;">
-                        <option value="lor">Letter of Recommendation (LOR)</option>
-                        <option value="job">Job/Internship Application Letter</option>
-                        <option value="cover">Cover Letter</option>
-                        <option value="sop">Statement of Purpose (SOP)</option>
-                        <option value="other">Other (General Letters)</option>
-                    </select>
-                </div>
-                <div class="letter-inputs">
-                    <div class="input-row">
-                        <input type="text" id="student-name" placeholder="Student's Full Name">
-                        <input type="text" id="recommender-name" placeholder="Recommender's Name">
-                    </div>
-                    <div class="input-row">
-                        <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
-                        <select id="lor-type">
-                            <option value="academic">Academic</option>
-                            <option value="professional">Professional</option>
-                            <option value="scholarship">Scholarship</option>
+            <div id="tab-content">
+                <!-- Job Application Content -->
+                <div id="job-application-content" style="display: none;">
+                    <!-- <h3>Letter Generator</h3> -->
+                    <div class="template-selector">
+                        <label style="display: flex; align-items: center;">Letter Type: </label>
+                        <select id="template-style" onchange="updateInputFields()" style="padding: 0.5rem;">
+                            <option value="lor">Letter of Recommendation (LOR)</option>
+                            <option value="job">Job/Internship Application Letter</option>
+                            <option value="cover">Cover Letter</option>
+                            <option value="sop">Statement of Purpose (SOP)</option>
+                            <option value="other">Other (General Letters)</option>
                         </select>
                     </div>
-                    <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
-                    <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
-                    <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
-                </div>
-                <button onclick="generateLetter()" class="button">Generate Letter</button>
-                <div class="loading-spinner"></div>
-                <div id="letter-output"></div>
-                <div id="download-buttons">
-                    <button onclick="downloadPDF()">PDF</button>
-                    <button onclick="downloadDOCX()">DOCX</button>
-                    <button onclick="enableEditing()">Edit</button>
-                    <button onclick="showHistory()">History</button>
-                </div>
-            </div>
-
-            <!-- Aptitude Test Content -->
-            <div id="aptitude-content" style="display: none;">
-                <div class="aptitude-controls">
-                    <h3>Aptitude Test</h3>
-                    <div class="test-settings">
-                        <div class="settings-row">
-                            <div class="setting-group">
-                                <label>Difficulty Level:</label>
-                                <select id="difficulty-level">
-                                    <option value="beginner">Beginner</option>
-                                    <option value="intermediate">Intermediate</option>
-                                    <option value="advanced">Advanced</option>
-                                </select>
-                            </div>
-                            <div class="setting-group">
-                                <label>Number of Questions:</label>
-                                <input 
-                                    type="number" 
-                                    id="question-count" 
-                                    min="5" 
-                                    max="30" 
-                                    value="10" 
-                                    placeholder="Enter number (5-50)"
-                                >
-                                <small class="input-hint">Min: 5, Max: 30 questions</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="test-categories">
-                        <div class="category-card" onclick="toggleCategory('quantitative')">
-                            <h4>Quantitative</h4>
-                            <p>Mathematical & Numerical Skills</p>
-                        </div>
-                        <div class="category-card" onclick="toggleCategory('verbal')">
-                            <h4>Verbal</h4>
-                            <p>Language & Communication</p>
-                        </div>
-                        <div class="category-card" onclick="toggleCategory('logical')">
-                            <h4>Logical</h4>
-                            <p>Reasoning & Problem Solving</p>
-                        </div>
-                    </div>
-                    <button class="button2" onclick="startTest()">Start Test</button>
-                </div>
-            
-                <div class="loading-spinner"></div>
-            
-                <div class="test-container">
-                    <div class="question-counter"></div>
-                    <div class="timer"></div>
-                    <div class="test-question"></div>
-                    <div class="test-options"></div>
-                    <button class="button2 next-button hidden" onclick="nextQuestion()">Next</button>
-                    <button class="button2 submit-button hidden" onclick="submitTest()">Submit Test</button>
-                </div>
-            
-                <div class="results-container hidden">
-                    <h3>Test Results</h3>
-                    <p id="score-summary">Your Score: <span id="score">0</span>/<span id="total">0</span></p>
-                    <div class="review-questions"></div>
-                    <button class="button2" onclick="restartTest()">Retake Test</button>
-                </div>
-            </div>
-
-            <!-- Resume Analysis Content -->
-            <div id="resume-content" style="display: none;">
-                <h3>Know Your Resume</h3>
-                <div class="resume-input-container">
-                    <textarea id="resume-text" placeholder="Paste your resume here..." rows="10"></textarea>
-                    <button onclick="analyzeResume()" class="button">Analyze Resume</button>
-                </div>
-                <div class="loading-spinner"></div>
-                <div id="resume-output"></div>
-                <div id="interview-container" class="interview-container hidden">
-                    <div id="interview-questions"></div>
-                    <div class="interview-navigation">
-                        <button onclick="downloadInterviewPrep()" class="button">Download QA</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="email-content" style="display: none;">
-                <h3>Email Response Generator</h3>
-                <div class="email-input-container">
-                    <textarea id="original-email-input" placeholder="Paste the original email here..." rows="6"></textarea>
-                    
-                    <div class="email-options">
+                    <div class="letter-inputs">
                         <div class="input-row">
-                            <div class="select-container">
-                                <label>Response Type:</label>
-                                <select id="response-type">
-                                    <option value="Informative">Informative</option>
-                                    <option value="Acknowledgment">Acknowledgment</option>
-                                    <option value="Scheduling">Scheduling</option>
-                                    <option value="Follow-up">Follow-up</option>
-                                    <option value="Courtesy">Courtesy</option>
-                                </select>
-                            </div>
-                            
-                            <div class="select-container">
-                                <label>Tone:</label>
-                                <select id="response-tone">
-                                    <option value="Professional">Professional</option>
-                                    <option value="Friendly">Friendly</option>
-                                    <option value="Neutral">Neutral</option>
-                                    <option value="Urgent">Urgent</option>
-                                </select>
+                            <input type="text" id="student-name" placeholder="Student's Full Name">
+                            <input type="text" id="recommender-name" placeholder="Recommender's Name">
+                        </div>
+                        <div class="input-row">
+                            <input type="text" id="relationship" placeholder="Relationship (e.g., Professor)">
+                            <select id="lor-type">
+                                <option value="academic">Academic</option>
+                                <option value="professional">Professional</option>
+                                <option value="scholarship">Scholarship</option>
+                            </select>
+                        </div>
+                        <textarea id="courses" placeholder="Relevant courses/projects" rows="2"></textarea>
+                        <textarea id="achievements" placeholder="Key achievements and skills" rows="3"></textarea>
+                        <textarea id="purpose" placeholder="Purpose of recommendation" rows="2"></textarea>
+                    </div>
+                    <button onclick="generateLetter()" class="button">Generate Letter</button>
+                    <div class="loading-spinner"></div>
+                    <div id="letter-output"></div>
+                    <div id="download-buttons">
+                        <button onclick="downloadPDF()">PDF</button>
+                        <button onclick="downloadDOCX()">DOCX</button>
+                        <button onclick="enableEditing()">Edit</button>
+                        <button onclick="showHistory()">History</button>
+                    </div>
+                </div>
+
+                <!-- Aptitude Test Content -->
+                <div id="aptitude-content" style="display: none;">
+                    <div class="aptitude-controls">
+                        <h3>Aptitude Test</h3>
+                        <div class="test-settings">
+                            <div class="settings-row">
+                                <div class="setting-group">
+                                    <label>Difficulty Level:</label>
+                                    <select id="difficulty-level">
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="setting-group">
+                                    <label>Number of Questions:</label>
+                                    <input 
+                                        type="number" 
+                                        id="question-count" 
+                                        min="5" 
+                                        max="30" 
+                                        value="10" 
+                                        placeholder="Enter number (5-50)"
+                                    >
+                                    <small class="input-hint">Min: 5, Max: 30 questions</small>
+                                </div>
                             </div>
                         </div>
+                        <div class="test-categories">
+                            <div class="category-card" onclick="toggleCategory('quantitative')">
+                                <h4>Quantitative</h4>
+                                <p>Mathematical & Numerical Skills</p>
+                            </div>
+                            <div class="category-card" onclick="toggleCategory('verbal')">
+                                <h4>Verbal</h4>
+                                <p>Language & Communication</p>
+                            </div>
+                            <div class="category-card" onclick="toggleCategory('logical')">
+                                <h4>Logical</h4>
+                                <p>Reasoning & Problem Solving</p>
+                            </div>
+                        </div>
+                        <button class="button2" onclick="startTest()">Start Test</button>
+                    </div>
+                
+                    <div class="loading-spinner"></div>
+                
+                    <div class="test-container">
+                        <div class="question-counter"></div>
+                        <div class="timer"></div>
+                        <div class="test-question"></div>
+                        <div class="test-options"></div>
+                        <button class="button2 next-button hidden" onclick="nextQuestion()">Next</button>
+                        <button class="button2 submit-button hidden" onclick="submitTest()">Submit Test</button>
+                    </div>
+                
+                    <div class="results-container hidden">
+                        <h3>Test Results</h3>
+                        <p id="score-summary">Your Score: <span id="score">0</span>/<span id="total">0</span></p>
+                        <div class="review-questions"></div>
+                        <button class="button2" onclick="restartTest()">Retake Test</button>
+                    </div>
+                </div>
+
+                <!-- Resume Analysis Content -->
+                <div id="resume-content" style="display: none;">
+                    <h3>Know Your Resume</h3>
+                    <div class="resume-input-container">
+                        <textarea id="resume-text" placeholder="Paste your resume here..." rows="10"></textarea>
+                        <button onclick="analyzeResume()" class="button">Analyze Resume</button>
+                    </div>
+                    <div class="loading-spinner"></div>
+                    <div id="resume-output"></div>
+                    <div id="interview-container" class="interview-container hidden">
+                        <div id="interview-questions"></div>
+                        <div class="interview-navigation">
+                            <button onclick="downloadInterviewPrep()" class="button">Download QA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="email-content" style="display: none;">
+                    <h3>Email Response Generator</h3>
+                    <div class="email-input-container">
+                        <textarea id="original-email-input" placeholder="Paste the original email here..." rows="6"></textarea>
+                        
+                        <textarea id="user-response-input" placeholder="Enter your key points or specific response details..." rows="4"></textarea>
+                        
+                        <div class="email-options">
+                            <div class="input-row">
+                                <div class="select-container">
+                                    <label>Response Type:</label>
+                                    <select id="response-type">
+                                        <option value="Informative">Informative</option>
+                                        <option value="Acknowledgment">Acknowledgment</option>
+                                        <option value="Scheduling">Scheduling</option>
+                                        <option value="Follow-up">Follow-up</option>
+                                        <option value="Courtesy">Courtesy</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="select-container">
+                                    <label>Tone:</label>
+                                    <select id="response-tone">
+                                        <option value="Professional">Professional</option>
+                                        <option value="Friendly">Friendly</option>
+                                        <option value="Neutral">Neutral</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="generateEmailResponse()" class="button">Generate Response</button>
                     </div>
                     
-                    <button onclick="generateEmailResponse()" class="button">Generate Response</button>
-                </div>
-                
-                <div class="loading-spinner"></div>
-                
-                <div id="email-response-output" class="output-container"></div>
-                
-                <div id="email-download-buttons" class="download-buttons" style="display: none;">
-                    <button onclick="enableEditing('email-response-output')">Edit</button>
+                    <div class="loading-spinner"></div>
+                    
+                    <div id="email-response-output" class="output-container"></div>
+                    
+                    <div id="email-download-buttons" class="download-buttons" style="display: none;">
+                        <button onclick="enableEditing('email-response-output')">Edit</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Add Resume Dialog -->
-    <div id="resume-dialog" class="dialog">
-        <div class="dialog-content">
-            <span class="close" onclick="closeResumeDialog()">&times;</span>
-            <h2>Add Your Resume</h2>
-            <textarea id="stored-resume" placeholder="Paste your resume here..." rows="10"></textarea>
-            <small style="color: #666; display: block; margin-top: 5px;">
-                Note: Resume is stored locally in your browser only.
-            </small>
-            <button onclick="saveResume()" class="savebtn">Save Resume</button>
+        <!-- Add Resume Dialog -->
+        <div id="resume-dialog" class="dialog">
+            <div class="dialog-content">
+                <span class="close" onclick="closeResumeDialog()">&times;</span>
+                <h2>Add Your Resume</h2>
+                <textarea id="stored-resume" placeholder="Paste your resume here..." rows="10"></textarea>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Note: Resume is stored locally in your browser only.
+                </small>
+                <button onclick="saveResume()" class="savebtn">Save Resume</button>
+            </div>
         </div>
-    </div>
 
-    <!-- Add this after your other dialogs -->
-    <div id="confirm-dialog" class="dialog">
-        <div class="dialog-content">
-            <h2>Confirm Clear Resume</h2>
-            <p style="margin: 1rem 0;">Are you sure you want to clear your stored resume?</p>
-            <div class="confirm-buttons">
-                <button onclick="confirmClearResume()" class="confirm-btn">Yes, Clear</button>
-                <button onclick="closeConfirmDialog()" class="cancel-btn">Cancel</button>
+        <!-- Add this after your other dialogs -->
+        <div id="confirm-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Confirm Clear Resume</h2>
+                <p style="margin: 1rem 0;">Are you sure you want to clear your stored resume?</p>
+                <div class="confirm-buttons">
+                    <button onclick="confirmClearResume()" class="confirm-btn">Yes, Clear</button>
+                    <button onclick="closeConfirmDialog()" class="cancel-btn">Cancel</button>
+                </div>
             </div>
         </div>
     </div>

@@ -845,34 +845,9 @@ function updateInputFields() {
 
 // Initialization
 window.onload = function() {
-    // First handle API key check
-    const storedApiKey = localStorage.getItem("geminiApiKey");
-    const resumeButton = document.querySelector(".resume-button");
-    
-    if (storedApiKey) {
-        document.querySelector(".api-key-button").style.display = "none";
-        document.getElementById("api-key-message").style.display = "none";
-        document.getElementById("application-tabs").style.display = "block";
-        resumeButton.style.display = "block"; // Show resume button if API key exists
-        showTab("letter");
-    } else {
-        resumeButton.style.display = "none"; // Hide resume button if no API key
-    }
-
-    // Add theme toggle button to navbar
-    const navbar = document.querySelector('.navbar-buttons');
-    if (!document.getElementById('theme-toggle')) {
-        const themeToggleButton = document.createElement('button');
-        themeToggleButton.id = 'theme-toggle';
-        themeToggleButton.className = 'theme-toggle';
-        themeToggleButton.setAttribute('aria-label', 'Toggle theme');
-        themeToggleButton.onclick = toggleTheme;
-        navbar.appendChild(themeToggleButton);
-    }
-
     // Initialize theme
     initTheme();
-
+    
     // Auto-fill resume text area if available
     const storedResume = localStorage.getItem('userResume');
     if (storedResume && document.getElementById('resume-text')) {
@@ -1123,6 +1098,7 @@ async function generateEmailResponse() {
     const apiKey = localStorage.getItem("geminiApiKey");
     const outputDiv = document.getElementById("email-response-output");
     const originalEmailInput = document.getElementById("original-email-input");
+    const userResponseInput = document.getElementById("user-response-input");
     const responseTypeSelect = document.getElementById("response-type");
     const toneSelect = document.getElementById("response-tone");
 
@@ -1131,8 +1107,10 @@ async function generateEmailResponse() {
     document.getElementById("email-download-buttons").style.display = "none";
     spinner.style.display = "block";
 
-    // Validate input
+    // Validate inputs
     const originalEmail = originalEmailInput.value.trim();
+    const userResponse = userResponseInput.value.trim();
+    
     if (!originalEmail) {
         outputDiv.innerHTML = "Please paste the original email.";
         spinner.style.display = "none";
@@ -1155,15 +1133,17 @@ async function generateEmailResponse() {
                             parts: [{
                                 text: `Generate an email response with the following requirements:
                                     Original Email: ${originalEmail}
+                                    User's response: ${userResponse}
                                     Response Type: ${responseTypeSelect.value}
                                     Tone: ${toneSelect.value}
 
                                     Guidelines:
                                     1. Craft a professional and appropriate response
                                     2. Directly address the key points in the original email
-                                    3. Match the response type and tone specified
-                                    4. Keep the length concise and clear
-                                    5. Use proper email formatting with salutation and signature
+                                    3. Incorporate the user's specific response points: ${userResponse}
+                                    4. Match the response type and tone specified
+                                    5. Keep the length concise and clear
+                                    6. Use proper email formatting with salutation and signature
                                     
                                     Response Types:
                                     - Informative: Provide detailed information
@@ -1782,4 +1762,23 @@ function restartTest() {
     document.querySelector('.results-container').classList.add('hidden');
     document.querySelector('.test-container').style.display = 'none';
     document.querySelector('.aptitude-controls').style.display = 'block';
+}
+
+function showMainApp() {
+    document.getElementById('landing-page').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    
+    // Check for API key and show appropriate content
+    const storedApiKey = localStorage.getItem("geminiApiKey");
+    const resumeButton = document.querySelector(".resume-button");
+    
+    if (storedApiKey) {
+        document.querySelector(".api-key-button").style.display = "none";
+        document.getElementById("api-key-message").style.display = "none";
+        document.getElementById("application-tabs").style.display = "block";
+        resumeButton.style.display = "block";
+        showTab("letter");
+    } else {
+        resumeButton.style.display = "none";
+    }
 }
